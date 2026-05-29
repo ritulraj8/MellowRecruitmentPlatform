@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
-  reactCompiler: true,
+  // Tells Turbopack to handle database binary packages externally
+  serverExternalPackages: ['pg'],
 };
 
 export default nextConfig;
