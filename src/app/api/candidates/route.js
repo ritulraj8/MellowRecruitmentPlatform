@@ -23,12 +23,20 @@ export async function GET(req) {
     const total = Number(countResult.rows[0]?.total ?? 0);
 
     const rowsResult = await pool.query(
-      'SELECT id, first_name, last_name, email, phone FROM "CANDIDATES" WHERE LOWER(first_name) LIKE $1 OR LOWER(last_name) LIKE $1 OR LOWER(email) LIKE $1 ORDER BY id DESC LIMIT $2 OFFSET $3',
+      'SELECT id, first_name, last_name, email, phone, resume_path FROM "CANDIDATES" WHERE LOWER(first_name) LIKE $1 OR LOWER(last_name) LIKE $1 OR LOWER(email) LIKE $1 ORDER BY id DESC LIMIT $2 OFFSET $3',
       [searchValue, pageSize, offset]
     );
 
+    // Convert bytea resume_path to base64
+    const candidatesWithEncodedResume = rowsResult.rows.map((row) => ({
+      ...row,
+      resume_path: row.resume_path 
+        ? Buffer.from(row.resume_path).toString('base64')
+        : null,
+    }));
+
     return Response.json({
-      candidates: rowsResult.rows,
+      candidates: candidatesWithEncodedResume,
       total,
       page: pageNumber,
       limit: pageSize,

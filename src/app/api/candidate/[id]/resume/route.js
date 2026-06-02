@@ -13,7 +13,10 @@ function getFileMetadata(buffer) {
   const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
 
   if (bytes.length >= 4) {
-    const header = `${bytes[0].toString(16)}${bytes[1].toString(16)}${bytes[2].toString(16)}${bytes[3].toString(16)}`.toUpperCase();
+    const header = Array.from(bytes.slice(0, 4))
+      .map(byte => byte.toString(16).padStart(2, '0'))
+      .join('')
+      .toUpperCase();
 
     if (header.startsWith('25504446')) {
       return { mime: 'application/pdf', extension: 'pdf' };
