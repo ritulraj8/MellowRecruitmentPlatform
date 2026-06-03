@@ -76,15 +76,43 @@ export default function JobMatchingPage() {
         candidates.map(async (candidate) => {
           try {
             // Prepare data for Flask
-             console.log("Candidate ID:", candidate.id);
-     //onsole.log("Resume Data:", candidate.resume_path);
+            console.log("Candidate ID:", candidate.id);
+            //onsole.log("Resume Data:", candidate.resume_path);
+            const embeddingResponse = await fetch(
+              '/api/embedding',
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  candidateId: candidate.id,
+                  jobId: selectedJob.id,
+                  resumeBlob: candidate.resume_path,
+                  jobDescription: selectedJob.description,
+                }),
+              }
+            );
+
+            const embeddingData =
+              await embeddingResponse.json();
+
+            if (!embeddingResponse.ok) {
+              throw new Error(
+                embeddingData.message ||
+                'Failed to load embeddings'
+              );
+            }
+
             const matchPayload = {
               candidate_id: candidate.id,
               job_id: selectedJob.id,
               job_description: selectedJob.description,
-              resume_blob: candidate.resume_path || '', // base64 encoded blob from database
-              job_embedding: null, // Will be created by Flask if needed
-              resume_embedding: null, // Will be created by Flask if needed
+              resume_blob: candidate.resume_path || '',
+              job_embedding:
+                embeddingData.job_embedding,
+              resume_embedding:
+                embeddingData.resume_embedding,
             };
 
             const matchResponse = await fetch(`${FLASK_API_URL}/match`, {

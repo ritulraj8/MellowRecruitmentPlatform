@@ -8,6 +8,7 @@ from matcher import (
     extract_text_from_blob,
     create_embeddings,
     calculate_hybrid_similarity_with_embeddings,
+    model
 )
 
 app = Flask(__name__)
@@ -44,6 +45,65 @@ def deserialize_embedding(value) -> np.ndarray:
 def health():
     """Health check endpoint."""
     return jsonify({"status": "ok", "message": "Flask ML Service Running"}), 200
+
+@app.route("/embedding", methods=["POST"])
+def create_text_embedding():
+
+    data = request.get_json()
+
+    text = data.get("text")
+
+    if not text:
+        return jsonify({
+            "error": "text is required"
+        }), 400
+
+    embedding = model.encode(
+        text,
+        convert_to_numpy=True
+    )
+
+    return jsonify({
+        "embedding": embedding.tolist()
+    })
+
+@app.route("/resume-embedding", methods=["POST"])
+def create_resume_embedding_route():
+
+    data = request.get_json()
+
+    resume_blob_b64 = data.get(
+        "resume_blob"
+    )
+
+    if not resume_blob_b64:
+        return jsonify({
+            "error": "resume_blob missing"
+        }), 400
+
+    try:
+        resume_blob = base64.b64decode(
+            resume_blob_b64
+        )
+
+        resume_text = extract_text_from_blob(
+            resume_blob
+        )
+
+        embedding = model.encode(
+            resume_text,
+            convert_to_numpy=True
+        )
+
+        return jsonify({
+            "embedding":
+            embedding.tolist()
+        })
+
+    except Exception as e:
+        return jsonify({
+            "error": str(e)
+        }), 500
 
 
 @app.route("/match", methods=["POST"])
@@ -110,7 +170,7 @@ def match_candidate():
         # Extract text from resume blob
         try:
             resume_text = extract_text_from_blob(resume_blob)
-            print(resume_text[:500])
+            #print(resume_text[:500])
         except Exception as e:
             return jsonify({
                 "error": f"Failed to extract text from resume: {str(e)}"
