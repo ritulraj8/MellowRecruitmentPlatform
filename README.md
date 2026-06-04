@@ -1,36 +1,214 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Mellow Recruitment Management System
 
-## Getting Started
+## Overview
 
-First, run the development server:
+The Recruitment Management System is a web-based application designed to streamline the recruitment workflow, from candidate onboarding to final hiring decisions. The system enables recruiters to manage candidates, create job postings, match candidates with jobs using AI-based resume analysis, track recruitment progress, and onboard successful candidates.
+
+---
+
+## Features
+
+### Authentication
+
+* Secure login system
+* Session management
+* Automatic logout after inactivity
+* Protected routes for authenticated users
+
+### Candidate Management
+
+* Add new candidates
+* View candidate profiles
+* Upload and manage resumes
+* Search and filter candidates
+
+### Job Management
+
+* Create job postings
+* View active job listings
+* Search jobs by title
+* Manage job descriptions
+
+### AI-Based Job Matching
+
+* Resume parsing and processing
+* Embedding generation using machine learning models
+* Candidate-job similarity scoring
+* Ranked candidate recommendations
+
+### Candidate Selection
+
+* Select candidates for specific job postings
+* Maintain candidate selection records
+* Track recruitment stages
+
+### Recruitment Workflow Tracking
+
+The system supports the following recruitment stages:
+
+1. Initial Screening
+2. Phone / Video Interview
+3. Technical Assessment
+4. HR Interview
+5. Final Decision
+
+Recruiters can:
+
+* Update stage status
+* Add notes
+* Track progress
+* Record final hiring decisions
+
+### Candidate Onboarding
+
+* Track hired candidates
+* Maintain onboarding records
+* Monitor onboarding status
+
+---
+
+## Technology Stack
+
+### Frontend
+
+* Next.js
+* React.js
+* Tailwind CSS
+
+### Backend
+
+* Next.js 
+* API Routes
+* FASTAPI
+* RESTAPI
+* Node.js
+
+### Database
+
+* PostgreSQL
+* Neon Database
+
+### Machine Learning
+
+* Python
+* Sentence Transformers
+* TF-IDF
+* Cosine Similarity
+
+---
+
+## Database Tables
+
+### JOBS
+
+Stores job posting information.
+
+### CANDIDATES
+
+Stores candidate details and resume information.
+
+### jobmatching
+
+Stores job description embeddings.
+
+### candidatesmatch
+
+Stores candidate resume embeddings.
+
+### candidate_selections
+
+Stores selected candidate records for job postings.
+
+### recruitment_steps
+
+Stores recruitment workflow stages, status updates, and recruiter notes.
+
+---
+
+## Installation
+
+### Clone Repository
+
+```bash
+git clone <repository-url>
+cd recruitment-management-system
+```
+
+### Install Dependencies
+
+```bash
+npm install
+```
+
+### Configure Environment Variables
+
+Create a `.env.local` file:
+
+```env
+DATABASE_URL=your_neon_database_url
+NEXT_PUBLIC_FLASK_API_URL=http://localhost:5000
+JWT_SECRET=your_secret_key
+```
+
+### Run Database Setup
+
+Execute the provided SQL file:
+
+```bash
+psql -d your_database_name -f database_setup.sql
+```
+
+or execute the SQL script in the Neon SQL Editor.
+
+### Start Next.js Application
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Start Flask Matching Service
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+```bash
+python app.py
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```text
+src/
+│
+├── app/
+│   ├── dashboard/
+│   ├── jobposting/
+│   ├── joblisting/
+│   ├── jobmatching/
+│   ├── candidateselection/
+│   ├── candidateview/
+│   ├── candidateonboarding/
+│   └── api/
+│
+├── components/
+│
+└── lib/
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Workflow
 
-## Deploy on Vercel
+1. Recruiter logs into the system.
+2. Recruiter creates job postings.
+3. Candidates are added to the system.
+4. AI matching engine ranks candidates against job requirements.
+5. Recruiter reviews ranked candidates.
+6. Candidate is selected for a specific job.
+7. Recruitment stages are tracked and updated.
+8. Final hiring decision is recorded.
+9. Successful candidates proceed to onboarding.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
+## Authors
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Ritul Raj Mullur
