@@ -28,12 +28,16 @@ export async function GET() {
     const jobsResult = await pool.query('SELECT COUNT(*) AS total FROM "JOBS"');
     const totalJobs = Number(jobsResult.rows[0]?.total ?? 0);
 
+    const candidatesonBoardedResult = await pool.query(
+      'SELECT COUNT(*) AS total FROM recruitment_steps WHERE status = \'Accepted\''
+    );
+    const totalCandidatesOnBoarded = Number(candidatesonBoardedResult.rows[0]?.total ?? 0);
     const jobsLast30DaysResult = await pool.query(
       'SELECT COUNT(*) AS total FROM "JOBS" WHERE created_at >= NOW() - INTERVAL \'30 days\''
     );
     const totalJobsLast30Days = Number(jobsLast30DaysResult.rows[0]?.total ?? 0);
 
-    return Response.json({ totalCandidates, totalJobs, totalJobsLast30Days });
+    return Response.json({ totalCandidates, totalJobs, totalCandidatesOnBoarded, totalJobsLast30Days });
   } catch (error) {
     console.error('Error loading dashboard stats:', error.message);
     return Response.json(

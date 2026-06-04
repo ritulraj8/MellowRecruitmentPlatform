@@ -9,6 +9,7 @@ export default function Dashboard() {
   const router = useRouter();
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [candidateCount, setCandidateCount] = useState(null);
+  const [candidateOnboardedCount, setCandidateOnboardedCount] = useState(null);
   const [jobCount, setJobCount] = useState(null);
   const [jobsLast30Days, setJobsLast30Days] = useState(null);
   const [statsLoading, setStatsLoading] = useState(true);
@@ -45,11 +46,13 @@ export default function Dashboard() {
         setCandidateCount(data.totalCandidates ?? 0);
         setJobCount(data.totalJobs ?? 0);
         setJobsLast30Days(data.totalJobsLast30Days ?? 0);
+        setCandidateOnboardedCount(data.totalCandidatesOnBoarded ?? 0);
       } catch (error) {
         console.error('Dashboard stats error:', error);
         setCandidateCount(0);
         setJobCount(0);
         setJobsLast30Days(0);
+        setCandidateOnboardedCount(0);
       } finally {
         setStatsLoading(false);
       }
@@ -104,7 +107,9 @@ export default function Dashboard() {
 
             <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/40">
               <p className="text-sm uppercase tracking-[0.24em] text-cyan-600">Candidates onboarded</p>
-              <p className="mt-5 text-4xl font-semibold text-slate-950"></p>
+              <p className="mt-5 text-4xl font-semibold text-slate-950">
+                {statsLoading ? '--' : candidateOnboardedCount}
+              </p>
               <p className="mt-3 text-sm leading-6 text-slate-600">New hires successfully onboarded in the last 30 days.</p>
             </article>
 

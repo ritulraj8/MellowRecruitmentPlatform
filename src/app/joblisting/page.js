@@ -138,7 +138,7 @@ export default function JobListingPage() {
                             </a>
                             <span className="text-slate-400">|</span>
                             <a
-                              href={`/job-matching?jobId=${job.id}`}
+                              href={`/jobmatching?jobId=${job.id}`}
                               className="text-sm font-semibold text-cyan-700 hover:text-cyan-900"
                             >
                               Match

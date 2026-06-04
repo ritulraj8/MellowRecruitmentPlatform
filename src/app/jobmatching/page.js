@@ -1,13 +1,15 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import BackButton from '../../components/BackButton';
 
 const FLASK_API_URL = process.env.NEXT_PUBLIC_FLASK_API_URL || 'http://localhost:5000';
 
+
 export default function JobMatchingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [jobs, setJobs] = useState([]);
   const [selectedJobId, setSelectedJobId] = useState('');
   const [matches, setMatches] = useState([]);
@@ -47,6 +49,17 @@ export default function JobMatchingPage() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    const jobIdFromUrl = searchParams.get('jobId');
+
+    if (
+      jobIdFromUrl &&
+      jobs.some((job) => String(job.id) === String(jobIdFromUrl))
+    ) {
+      setSelectedJobId(jobIdFromUrl);
+    }
+  }, [jobs, searchParams]);
 
   const selectedJob = useMemo(
     () => jobs.find((job) => String(job.id) === String(selectedJobId)) || null,
@@ -156,9 +169,36 @@ export default function JobMatchingPage() {
     router.push(`/candidateview/${candidateId}`);
   }
 
-  function handleSelectCandidate(candidateId) {
-    // Navigate to candidate selection or next step
-    router.push(`/candidateselection?candidateId=${candidateId}`);
+  async function handleSelectCandidate(candidateId, jobId) {
+  try {
+    const response = await fetch('/api/candidate-selections', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        candidateId,
+        jobId,
+      }),
+    });
+
+    const text = await response.text();
+
+    console.log('Raw response text:', text);
+
+    if (!response.ok) {
+      throw new Error(text || 'Failed to create selection');
+    }
+
+    const data = JSON.parse(text);
+    console.log("Selection Created:", data);
+    router.push(
+      `/candidateselection?selectionId=${data.selectionId}`
+    );
+  } catch (error) {
+    console.error(error);
+    alert(error.message);
+  }
   }
 
   return (
@@ -288,7 +328,7 @@ export default function JobMatchingPage() {
                                 </button>
                                 <span className="text-slate-300">|</span>
                                 <button
-                                  onClick={() => handleSelectCandidate(candidate.id)}
+                                  onClick={() => handleSelectCandidate(candidate.id, selectedJob.id)}
                                   className="text-sm font-medium text-slate-950 hover:text-slate-700 hover:underline transition"
                                 >
                                   Select
