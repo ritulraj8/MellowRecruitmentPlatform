@@ -1,4 +1,5 @@
-﻿import './globals.css';
+import './globals.css';
+import InactivityTracker from '@/components/InactivityTracker';
 
 export const metadata = {
   title: 'Mellow',
@@ -8,7 +9,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <InactivityTracker />
+        {children}
+      </body>
     </html>
   );
 }

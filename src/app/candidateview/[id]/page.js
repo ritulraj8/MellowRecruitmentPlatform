@@ -58,7 +58,7 @@ export default async function CandidateView({ params }) {
     <main className="min-h-screen bg-slate-50 text-slate-950">
       <section className="relative overflow-hidden px-6 py-16 sm:px-10 lg:px-16">
         <div className="mx-auto max-w-4xl">
-          <BackButton fallbackHref="/candidatelist" />
+          <BackButton fallbackHref="/candidatelist" forceFallback={true} />
           <div className="mb-10 rounded-[2rem] border border-slate-200 bg-white p-8 shadow-2xl shadow-slate-200/50">
             <p className="text-sm uppercase tracking-[0.32em] text-cyan-600">Candidate details</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">

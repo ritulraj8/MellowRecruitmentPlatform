@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import BackButton from '../../components/BackButton';
 
-export default function CandidateSelectionPage() {
+function CandidateSelectionComponent() {
     const searchParams = useSearchParams();
 
     const selectionId = searchParams.get('selectionId');
@@ -275,7 +275,7 @@ export default function CandidateSelectionPage() {
             <section className="relative overflow-hidden px-6 py-16 sm:px-10 lg:px-16">
                 <div className="mx-auto max-w-7xl">
                     <BackButton
-                        fallbackHref="/jobmatching"
+                        fallbackHref="/dashboard"
                         forceFallback
                     />
 
@@ -495,5 +495,21 @@ export default function CandidateSelectionPage() {
                 </div>
             </section>
         </main>
+    );
+}
+
+import { Suspense } from 'react';
+
+export default function CandidateSelectionPage() {
+    return (
+        <Suspense fallback={
+            <main className="min-h-screen bg-slate-50 text-slate-950 flex items-center justify-center px-6">
+                <div className="rounded-[1.5rem] border border-slate-200 bg-white p-10 shadow-xl shadow-slate-200/40">
+                    <p className="text-sm font-medium text-slate-700">Loading selection...</p>
+                </div>
+            </main>
+        }>
+            <CandidateSelectionComponent />
+        </Suspense>
     );
 }

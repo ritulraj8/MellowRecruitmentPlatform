@@ -63,6 +63,17 @@ export default function Dashboard() {
     return () => controller.abort();
   }, [checkingAuth]);
 
+  const handleBack = async () => {
+    localStorage.removeItem('mellowAuth');
+    localStorage.removeItem('mellowLastActive');
+    try {
+      await fetch('/api/logout', { method: 'POST' });
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+    router.replace('/loginpage');
+  };
+
   if (checkingAuth) {
     return (
       <main className="min-h-screen bg-slate-50 text-slate-950 flex items-center justify-center px-6">
@@ -77,7 +88,12 @@ export default function Dashboard() {
     <main className="min-h-screen bg-slate-50 text-slate-950">
       <section className="relative overflow-hidden px-6 py-16 sm:px-10 lg:px-16">
         <div className="mx-auto max-w-7xl">
-          <BackButton fallbackHref="/loginpage" forceFallback />
+          <button
+            onClick={handleBack}
+            className="mb-6 inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:border-slate-400 hover:bg-slate-50"
+          >
+            Back
+          </button>
           <div className="mb-10 rounded-[2rem] border border-slate-200 bg-white p-8 shadow-2xl shadow-slate-200/50">
             <p className="text-sm uppercase tracking-[0.32em] text-cyan-600">Dashboard overview</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">

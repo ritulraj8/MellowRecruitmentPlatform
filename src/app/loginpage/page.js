@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -42,7 +42,8 @@ export default function LoginPage() {
       }
 
       localStorage.setItem('mellowAuth', 'true');
-      router.push('/dashboard');
+      localStorage.setItem('mellowLastActive', String(Date.now()));
+      router.replace('/dashboard');
     } catch (err) {
       setError('Something went wrong. Please try again.');
       setLoading(false);
@@ -69,7 +70,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleLogin} method="POST" className="space-y-6">
             <div>
               <label
                 htmlFor="email"

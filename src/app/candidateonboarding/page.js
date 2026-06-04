@@ -8,7 +8,7 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phoneRegex = /^(?:\+91[\s-]?[6-9]\d{9}|[6-9]\d{9}|\+?[1-9]\d{1,14})$/;
 const allowedExtensions = ['pdf', 'doc', 'docx', 'txt'];
 
-export default function CandidateOnboarding() {
+function CandidateOnboardingForm() {
   const searchParams = useSearchParams();
   const [candidateId, setCandidateId] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -176,7 +176,7 @@ export default function CandidateOnboarding() {
     <main className="min-h-screen bg-slate-50 text-slate-950">
       <section className="relative overflow-hidden px-6 py-16 sm:px-10 lg:px-16">
         <div className="mx-auto max-w-3xl">
-          <BackButton fallbackHref="/dashboard" />
+          <BackButton fallbackHref="/dashboard" forceFallback={true} />
           <div className="mb-10 rounded-[2rem] border border-slate-200 bg-white p-8 shadow-2xl shadow-slate-200/50">
             <p className="text-sm uppercase tracking-[0.32em] text-cyan-600">Candidate onboarding</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
@@ -336,5 +336,21 @@ export default function CandidateOnboarding() {
         </div>
       </section>
     </main>
+  );
+}
+
+import { Suspense } from 'react';
+
+export default function CandidateOnboarding() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-slate-50 text-slate-950 flex items-center justify-center px-6">
+        <div className="rounded-[1.5rem] border border-slate-200 bg-white p-10 shadow-xl shadow-slate-200/40">
+          <p className="text-sm font-medium text-slate-700">Loading form...</p>
+        </div>
+      </main>
+    }>
+      <CandidateOnboardingForm />
+    </Suspense>
   );
 }

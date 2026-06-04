@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { neonConfig, Pool } from '@neondatabase/serverless';
 import ws from 'ws';
+import { signJWT } from '@/lib/jwt';
 
 neonConfig.webSocketConstructor = ws;
 
@@ -38,12 +39,24 @@ export async function POST(req) {
       );
     }
 
+    const token = await signJWT({
+      userId: user.id,
+      email: user.email,
+    });
+
+    const cookieValue = `mellowToken=${token}; HttpOnly; Path=/; Max-Age=1800; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
+
     return Response.json(
       {
         success: true,
         message: 'Login successful',
       },
-      { status: 200 }
+      {
+        status: 200,
+        headers: {
+          'Set-Cookie': cookieValue,
+        },
+      }
     );
   } catch (error) {
     console.error(error);

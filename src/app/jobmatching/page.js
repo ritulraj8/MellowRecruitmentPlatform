@@ -7,7 +7,7 @@ import BackButton from '../../components/BackButton';
 const FLASK_API_URL = process.env.NEXT_PUBLIC_FLASK_API_URL || 'http://localhost:5000';
 
 
-export default function JobMatchingPage() {
+function JobMatchingComponent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [jobs, setJobs] = useState([]);
@@ -347,6 +347,22 @@ export default function JobMatchingPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+import { Suspense } from 'react';
+
+export default function JobMatchingPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-slate-50 text-slate-950 flex items-center justify-center px-6">
+        <div className="rounded-[1.5rem] border border-slate-200 bg-white p-10 shadow-xl shadow-slate-200/40">
+          <p className="text-sm font-medium text-slate-700">Loading matches...</p>
+        </div>
+      </main>
+    }>
+      <JobMatchingComponent />
+    </Suspense>
   );
 }
 
