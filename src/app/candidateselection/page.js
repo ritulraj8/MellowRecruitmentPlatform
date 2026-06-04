@@ -275,7 +275,7 @@ function CandidateSelectionComponent() {
             <section className="relative overflow-hidden px-6 py-16 sm:px-10 lg:px-16">
                 <div className="mx-auto max-w-7xl">
                     <BackButton
-                        fallbackHref="/dashboard"
+                        fallbackHref="/candidateselection"
                         forceFallback
                     />
 

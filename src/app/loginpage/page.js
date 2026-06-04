@@ -54,7 +54,7 @@ export default function LoginPage() {
     <main className="min-h-screen bg-slate-50 text-slate-950">
       <section className="flex min-h-screen items-center justify-center px-6 py-16 sm:px-10 lg:px-20">
         <div className="w-full max-w-2xl rounded-[2rem] border border-slate-200 bg-white p-10 shadow-2xl shadow-slate-200/50">
-          <BackButton fallbackHref="/dashboard" />
+          <BackButton fallbackHref="/" forceFallback={true} />
           <div className="mb-8">
             <p className="text-sm uppercase tracking-[0.32em] text-cyan-600">
               Welcome back to
