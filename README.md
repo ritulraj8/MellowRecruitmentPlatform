@@ -178,7 +178,7 @@ JWT_SECRET=your_secret_key
 Execute the provided SQL file:
 
 ```bash
-psql -d your_database_name -f database_setup.sql
+psql -d your_database_name -f database.sql
 ```
 
 or execute the SQL script in the Neon SQL Editor.
