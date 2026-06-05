@@ -2,11 +2,13 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-
+import textract
+import tempfile
 import magic
 from io import BytesIO
 from pypdf import PdfReader
 from docx import Document
+import win32com.client
 
 
 # --------------------------------------------------
@@ -22,40 +24,45 @@ model = SentenceTransformer("all-MiniLM-L6-v2")
 
 def extract_text_from_blob(blob_data):
     """
-    Extract text from PDF, DOCX, or TXT files.
+    Extract text from PDF, DOC, DOCX, and TXT files.
     """
 
     mime_type = magic.from_buffer(blob_data, mime=True)
 
     print(f"Detected MIME Type: {mime_type}")
 
-    # -------------------------
+    # ==================================================
     # PDF
-    # -------------------------
+    # ==================================================
     if mime_type == "application/pdf":
 
-        pdf_file = BytesIO(blob_data)
-        reader = PdfReader(pdf_file)
+        try:
+            pdf_file = BytesIO(blob_data)
+            reader = PdfReader(pdf_file)
 
-        text = ""
+            text = ""
 
-        for page in reader.pages:
-            page_text = page.extract_text()
+            for page in reader.pages:
+                page_text = page.extract_text()
 
-            if page_text:
-                text += page_text + "\n"
+                if page_text:
+                    text += page_text + "\n"
 
-        if not text.strip():
+            if not text.strip():
+                raise ValueError(
+                    "Resume blob contains no extractable text. PDF appears to be image/scanned."
+                )
+
+            return text
+
+        except Exception as e:
             raise ValueError(
-                "Resume blob contains no extractable text. "
-                "PDF appears to be image/scanned."
+                f"Unable to read PDF file: {str(e)}"
             )
 
-        return text
-
-    # -------------------------
+    # ==================================================
     # DOCX
-    # -------------------------
+    # ==================================================
     elif mime_type in [
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         "application/zip"
@@ -84,31 +91,72 @@ def extract_text_from_blob(blob_data):
                 f"Unable to read DOCX file: {str(e)}"
             )
 
-    # -------------------------
-    # TXT
-    # -------------------------
-    elif mime_type.startswith("text/"):
+    # ==================================================
+    # DOC (OLD MICROSOFT WORD)
+    # ==================================================
+    elif mime_type == "application/msword":
 
-        text = blob_data.decode(
-            "utf-8",
-            errors="ignore"
-        )
+      import pythoncom
+      pythoncom.CoInitialize()
+      try:
+        with tempfile.NamedTemporaryFile(
+            delete=False,
+            suffix=".doc"
+        ) as temp_file:
 
-        if not text.strip():
-            raise ValueError(
-                "Text file is empty."
-            )
+            temp_file.write(blob_data)
+            temp_path = temp_file.name
+
+        word = win32com.client.Dispatch("Word.Application")
+        doc = word.Documents.Open(temp_path)
+
+        text = doc.Content.Text
+
+        doc.Close()
+        word.Quit()
 
         return text
 
-    # -------------------------
+      except Exception as e:
+        raise ValueError(
+            f"Unable to read DOC file: {str(e)}"
+        )
+      finally:
+        pythoncom.CoUninitialize()
+
+        
+    # ==================================================
+    # TXT
+    # ==================================================
+    elif mime_type.startswith("text/"):
+
+        try:
+
+            text = blob_data.decode(
+                "utf-8",
+                errors="ignore"
+            )
+
+            if not text.strip():
+                raise ValueError(
+                    "Text file is empty."
+                )
+
+            return text
+
+        except Exception as e:
+            raise ValueError(
+                f"Unable to read text file: {str(e)}"
+            )
+
+    # ==================================================
     # UNSUPPORTED
-    # -------------------------
+    # ==================================================
     else:
+
         raise ValueError(
             f"Unsupported file type: {mime_type}"
         )
-
 
 # --------------------------------------------------
 # EMBEDDING FUNCTIONS

@@ -25,20 +25,56 @@ export async function GET(request) {
     await ensureJobsTable();
     const url = new URL(request.url);
     const search = url.searchParams.get('search')?.trim() ?? '';
+    const pageParam = url.searchParams.get('page');
+    const limitParam = url.searchParams.get('limit');
 
-    let result;
-    if (search) {
-      result = await pool.query(
-        'SELECT id, title, description, created_at FROM "JOBS" WHERE title ILIKE $1 ORDER BY created_at DESC',
-        [`%${search}%`]
-      );
+    if (pageParam !== null) {
+      const page = Math.max(1, parseInt(pageParam, 10) || 1);
+      const limit = Math.max(1, parseInt(limitParam || '10', 10) || 10);
+      const offset = (page - 1) * limit;
+
+      let result;
+      let countResult;
+      if (search) {
+        countResult = await pool.query(
+          'SELECT COUNT(*) FROM "JOBS" WHERE title ILIKE $1',
+          [`%${search}%`]
+        );
+        result = await pool.query(
+          'SELECT id, title, description, created_at FROM "JOBS" WHERE title ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
+          [`%${search}%`, limit, offset]
+        );
+      } else {
+        countResult = await pool.query('SELECT COUNT(*) FROM "JOBS"');
+        result = await pool.query(
+          'SELECT id, title, description, created_at FROM "JOBS" ORDER BY created_at DESC LIMIT $1 OFFSET $2',
+          [limit, offset]
+        );
+      }
+
+      const total = parseInt(countResult.rows[0].count, 10);
+
+      return Response.json({
+        jobs: result.rows,
+        total,
+        page,
+        limit,
+      });
     } else {
-      result = await pool.query(
-        'SELECT id, title, description, created_at FROM "JOBS" ORDER BY created_at DESC'
-      );
-    }
+      let result;
+      if (search) {
+        result = await pool.query(
+          'SELECT id, title, description, created_at FROM "JOBS" WHERE title ILIKE $1 ORDER BY created_at DESC',
+          [`%${search}%`]
+        );
+      } else {
+        result = await pool.query(
+          'SELECT id, title, description, created_at FROM "JOBS" ORDER BY created_at DESC'
+        );
+      }
 
-    return Response.json({ jobs: result.rows });
+      return Response.json({ jobs: result.rows });
+    }
   } catch (error) {
     console.error('Error loading jobs:', error.message);
     return Response.json({ message: 'Failed to load jobs.' }, { status: 500 });

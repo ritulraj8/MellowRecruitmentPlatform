@@ -1,5 +1,9 @@
-﻿import json
+import json
 import base64
+import os
+import tempfile
+import win32com.client
+import pythoncom
 import numpy as np
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -245,6 +249,58 @@ def match_candidate():
         return jsonify({
             "error": f"Unexpected error: {str(e)}"
         }), 500
+
+
+@app.route("/convert-doc", methods=["POST"])
+def convert_doc_route():
+    pythoncom.CoInitialize()
+    try:
+        data = request.get_json(silent=True)
+        if not data or "doc_bytes" not in data:
+            return jsonify({"error": "doc_bytes (base64 encoded) is required in JSON body"}), 400
+        
+        doc_bytes = base64.b64decode(data["doc_bytes"])
+        
+        # Save to temp .doc file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".doc") as temp_in:
+            temp_in.write(doc_bytes)
+            temp_in_path = temp_in.name
+            
+        temp_out_path = temp_in_path + "x" # .docx
+        
+        # Open in Word and save as docx
+        # FileFormat=16 is wdFormatXMLDocument (docx)
+        word = win32com.client.Dispatch("Word.Application")
+        word.Visible = False
+        doc = None
+        try:
+            doc = word.Documents.Open(temp_in_path)
+            doc.SaveAs2(temp_out_path, FileFormat=16)
+        finally:
+            if doc:
+                doc.Close()
+            word.Quit()
+            
+        # Read the docx file
+        with open(temp_out_path, "rb") as temp_out:
+            docx_bytes = temp_out.read()
+            
+        # Clean up temp files
+        try:
+            os.remove(temp_in_path)
+            os.remove(temp_out_path)
+        except Exception as cleanup_err:
+            print(f"Cleanup error: {cleanup_err}")
+            
+        return jsonify({
+            "docx_bytes": base64.b64encode(docx_bytes).decode("utf-8")
+        }), 200
+        
+    except Exception as e:
+        print("Error during doc to docx conversion:", str(e))
+        return jsonify({"error": str(e)}), 500
+    finally:
+        pythoncom.CoUninitialize()
 
 
 # --------------------------------------------------

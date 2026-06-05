@@ -33,7 +33,37 @@ export async function POST(req) {
       );
     }
 
-    const resumeBytes = resumeFile ? Buffer.from(await resumeFile.arrayBuffer()) : null;
+    let resumeBytes = resumeFile ? Buffer.from(await resumeFile.arrayBuffer()) : null;
+
+    if (resumeFile && resumeFile.name.toLowerCase().endsWith('.doc')) {
+      try {
+        const FLASK_API_URL = process.env.NEXT_PUBLIC_FLASK_API_URL || 'http://localhost:5000';
+        const response = await fetch(`${FLASK_API_URL}/convert-doc`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            doc_bytes: resumeBytes.toString('base64'),
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `Flask conversion service failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+        resumeBytes = Buffer.from(data.docx_bytes, 'base64');
+        console.log('Successfully converted .doc file to .docx');
+      } catch (err) {
+        console.error('Error converting .doc to .docx:', err.message);
+        return Response.json(
+          { message: `Failed to convert resume from .doc to .docx: ${err.message}` },
+          { status: 500 }
+        );
+      }
+    }
 
     if (candidateId && !Number.isNaN(candidateId)) {
       const existingEmail = await pool.query(

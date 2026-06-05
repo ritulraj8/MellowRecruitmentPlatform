@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import BackButton from '../../components/BackButton';
+import Pagination from '../../components/Pagination';
 
 export default function JobListingPage() {
   const [jobs, setJobs] = useState([]);
@@ -9,6 +10,9 @@ export default function JobListingPage() {
   const [searchValue, setSearchValue] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 10;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -21,6 +25,8 @@ export default function JobListingPage() {
         if (searchValue) {
           params.append('search', searchValue);
         }
+        params.append('page', page.toString());
+        params.append('limit', limit.toString());
 
         const response = await fetch(`/api/jobs?${params.toString()}`, {
           signal: controller.signal,
@@ -30,6 +36,7 @@ export default function JobListingPage() {
         }
         const data = await response.json();
         setJobs(data.jobs || []);
+        setTotal(data.total || 0);
       } catch (err) {
         if (err.name !== 'AbortError') {
           setError('Unable to load jobs. Please try again.');
@@ -41,7 +48,7 @@ export default function JobListingPage() {
 
     loadJobs();
     return () => controller.abort();
-  }, [searchValue]);
+  }, [searchValue, page]);
 
   function formatDate(dateString) {
     if (!dateString) return 'N/A';
@@ -61,6 +68,7 @@ export default function JobListingPage() {
 
   function handleSearch(event) {
     event.preventDefault();
+    setPage(1);
     setSearchValue(searchTerm.trim());
   }
 
@@ -112,44 +120,51 @@ export default function JobListingPage() {
                 No jobs match your search.
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-slate-200 text-sm text-left">
-                  <thead>
-                    <tr className="bg-slate-50 text-slate-700">
-                      <th className="px-4 py-3">Job Title</th>
-                      <th className="px-4 py-3">Description Preview</th>
-                      <th className="px-4 py-3">Posted On</th>
-                      <th className="px-4 py-3">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200 bg-white">
-                    {jobs.map((job) => (
-                      <tr key={job.id} className="hover:bg-slate-50">
-                        <td className="px-4 py-4 font-semibold text-slate-950">{job.title}</td>
-                        <td className="px-4 py-4 text-slate-700">{getPreview(job.description)}</td>
-                        <td className="px-4 py-4 text-slate-700">{formatDate(job.created_at)}</td>
-                        <td className="px-4 py-4 text-slate-950">
-                          <div className="flex flex-wrap gap-3">
-                            <a
-                              href={`/jobview/${job.id}`}
-                              className="text-sm font-semibold text-cyan-700 hover:text-cyan-900"
-                            >
-                              View
-                            </a>
-                            <span className="text-slate-400">|</span>
-                            <a
-                              href={`/jobmatching?jobId=${job.id}`}
-                              className="text-sm font-semibold text-cyan-700 hover:text-cyan-900"
-                            >
-                              Match
-                            </a>
-                          </div>
-                        </td>
+              <>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-slate-200 text-sm text-left">
+                    <thead>
+                      <tr className="bg-slate-50 text-slate-700">
+                        <th className="px-4 py-3">Job Title</th>
+                        <th className="px-4 py-3">Description Preview</th>
+                        <th className="px-4 py-3">Posted On</th>
+                        <th className="px-4 py-3">Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200 bg-white">
+                      {jobs.map((job) => (
+                        <tr key={job.id} className="hover:bg-slate-50">
+                          <td className="px-4 py-4 font-semibold text-slate-950">{job.title}</td>
+                          <td className="px-4 py-4 text-slate-700">{getPreview(job.description)}</td>
+                          <td className="px-4 py-4 text-slate-700">{formatDate(job.created_at)}</td>
+                          <td className="px-4 py-4 text-slate-950">
+                            <div className="flex flex-wrap gap-3">
+                              <a
+                                href={`/jobview/${job.id}`}
+                                className="text-sm font-semibold text-cyan-700 hover:text-cyan-900"
+                              >
+                                View
+                              </a>
+                              <span className="text-slate-400">|</span>
+                              <a
+                                href={`/jobmatching?jobId=${job.id}`}
+                                className="text-sm font-semibold text-cyan-700 hover:text-cyan-900"
+                              >
+                                Match
+                              </a>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <Pagination
+                  currentPage={page}
+                  totalPages={Math.ceil(total / limit)}
+                  onPageChange={setPage}
+                />
+              </>
             )}
           </div>
         </div>

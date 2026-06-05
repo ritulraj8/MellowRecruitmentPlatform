@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import BackButton from '../../components/BackButton';
+import Pagination from '../../components/Pagination';
 
 const FLASK_API_URL = process.env.NEXT_PUBLIC_FLASK_API_URL || 'http://localhost:5000';
 
@@ -16,6 +17,8 @@ function JobMatchingComponent() {
   const [loadingJobs, setLoadingJobs] = useState(true);
   const [loadingMatches, setLoadingMatches] = useState(false);
   const [error, setError] = useState('');
+  const [matchPage, setMatchPage] = useState(1);
+  const matchLimit = 10;
 
   useEffect(() => {
     let active = true;
@@ -66,6 +69,11 @@ function JobMatchingComponent() {
     [jobs, selectedJobId]
   );
 
+  const paginatedMatches = useMemo(() => {
+    const start = (matchPage - 1) * matchLimit;
+    return matches.slice(start, start + matchLimit);
+  }, [matches, matchPage, matchLimit]);
+
   async function handleFindMatches() {
     setError('');
     if (!selectedJob) {
@@ -77,7 +85,7 @@ function JobMatchingComponent() {
     setMatches([]);
 
     try {
-      const response = await fetch('/api/candidates?limit=50');
+      const response = await fetch('/api/candidates?all=true');
       if (!response.ok) {
         throw new Error('Unable to load candidate data.');
       }
@@ -157,6 +165,7 @@ function JobMatchingComponent() {
         .map((candidate, index) => ({ ...candidate, rank: index + 1 }));
 
       setMatches(ranked);
+      setMatchPage(1);
     } catch (err) {
       console.error('Match error:', err);
       setError('Failed to find matching candidates. Ensure Flask server is running at ' + FLASK_API_URL);
@@ -294,52 +303,59 @@ function JobMatchingComponent() {
                       : 'Select a job to see candidate matches.'}
                   </div>
                 ) : (
-                  <div className="overflow-x-auto rounded-2xl border border-slate-200">
-                    <table className="w-full text-sm">
-                      <thead className="bg-slate-50 border-b border-slate-200">
-                        <tr>
-                          <th className="px-6 py-4 text-left font-semibold text-slate-700">Rank</th>
-                          <th className="px-6 py-4 text-left font-semibold text-slate-700">First Name</th>
-                          <th className="px-6 py-4 text-left font-semibold text-slate-700">Last Name</th>
-                          <th className="px-6 py-4 text-left font-semibold text-slate-700">Email</th>
-                          <th className="px-6 py-4 text-center font-semibold text-slate-700">Match %</th>
-                          <th className="px-6 py-4 text-center font-semibold text-slate-700">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-200">
-                        {matches.map((candidate) => (
-                          <tr key={candidate.id} className="hover:bg-slate-50 transition">
-                            <td className="px-6 py-4 font-semibold text-slate-950">{candidate.rank}</td>
-                            <td className="px-6 py-4 text-slate-950">{candidate.first_name || '—'}</td>
-                            <td className="px-6 py-4 text-slate-950">{candidate.last_name || '—'}</td>
-                            <td className="px-6 py-4 text-slate-600">{candidate.email || '—'}</td>
-                            <td className="px-6 py-4 text-center">
-                              <span className="inline-flex items-center justify-center rounded-full bg-cyan-100 px-3 py-1 text-sm font-semibold text-cyan-700">
-                                {Math.round(candidate.score)}%
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-center">
-                              <div className="flex items-center justify-center gap-3">
-                                <button
-                                  onClick={() => handleViewCandidate(candidate.id)}
-                                  className="text-sm font-medium text-cyan-600 hover:text-cyan-700 hover:underline transition"
-                                >
-                                  View
-                                </button>
-                                <span className="text-slate-300">|</span>
-                                <button
-                                  onClick={() => handleSelectCandidate(candidate.id, selectedJob.id)}
-                                  className="text-sm font-medium text-slate-950 hover:text-slate-700 hover:underline transition"
-                                >
-                                  Select
-                                </button>
-                              </div>
-                            </td>
+                  <>
+                    <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                      <table className="w-full text-sm">
+                        <thead className="bg-slate-50 border-b border-slate-200">
+                          <tr>
+                            <th className="px-6 py-4 text-left font-semibold text-slate-700">Rank</th>
+                            <th className="px-6 py-4 text-left font-semibold text-slate-700">First Name</th>
+                            <th className="px-6 py-4 text-left font-semibold text-slate-700">Last Name</th>
+                            <th className="px-6 py-4 text-left font-semibold text-slate-700">Email</th>
+                            <th className="px-6 py-4 text-center font-semibold text-slate-700">Match %</th>
+                            <th className="px-6 py-4 text-center font-semibold text-slate-700">Actions</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200">
+                          {paginatedMatches.map((candidate) => (
+                            <tr key={candidate.id} className="hover:bg-slate-50 transition">
+                              <td className="px-6 py-4 font-semibold text-slate-950">{candidate.rank}</td>
+                              <td className="px-6 py-4 text-slate-950">{candidate.first_name || '—'}</td>
+                              <td className="px-6 py-4 text-slate-950">{candidate.last_name || '—'}</td>
+                              <td className="px-6 py-4 text-slate-600">{candidate.email || '—'}</td>
+                              <td className="px-6 py-4 text-center">
+                                <span className="inline-flex items-center justify-center rounded-full bg-cyan-100 px-3 py-1 text-sm font-semibold text-cyan-700">
+                                  {Math.round(candidate.score)}%
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-center">
+                                <div className="flex items-center justify-center gap-3">
+                                  <button
+                                    onClick={() => handleViewCandidate(candidate.id)}
+                                    className="text-sm font-medium text-cyan-600 hover:text-cyan-700 hover:underline transition"
+                                  >
+                                    View
+                                  </button>
+                                  <span className="text-slate-300">|</span>
+                                  <button
+                                    onClick={() => handleSelectCandidate(candidate.id, selectedJob.id)}
+                                    className="text-sm font-medium text-slate-950 hover:text-slate-700 hover:underline transition"
+                                  >
+                                    Select
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <Pagination
+                      currentPage={matchPage}
+                      totalPages={Math.ceil(matches.length / matchLimit)}
+                      onPageChange={setMatchPage}
+                    />
+                  </>
                 )}
               </div>
             </div>
