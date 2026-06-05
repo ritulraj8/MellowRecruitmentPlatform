@@ -29,7 +29,7 @@ export async function GET() {
     const totalJobs = Number(jobsResult.rows[0]?.total ?? 0);
 
     const candidatesonBoardedResult = await pool.query(
-      'SELECT COUNT(*) AS total FROM recruitment_steps WHERE status = \'Accepted\''
+      'SELECT COUNT(*) AS total FROM recruitment_steps WHERE status = \'Accepted\' and updated_at >= NOW() - INTERVAL \'30 days\''
     );
     const totalCandidatesOnBoarded = Number(candidatesonBoardedResult.rows[0]?.total ?? 0);
     const jobsLast30DaysResult = await pool.query(

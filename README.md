@@ -136,9 +136,32 @@ cd recruitment-management-system
 
 ### Install Dependencies
 
+#### Frontend & Node API (Next.js)
+
 ```bash
 npm install
 ```
+
+#### ML Matching Service (Flask)
+
+Create and activate a virtual environment, then install the Python dependencies:
+
+```bash
+# Create virtual environment
+python -m venv myenv
+
+# Activate virtual environment
+# Windows (PowerShell):
+.\myenv\Scripts\Activate.ps1
+# Windows (Command Prompt):
+.\myenv\Scripts\activate.bat
+# macOS/Linux:
+source myenv/bin/activate
+
+# Install requirements
+pip install -r requirements.txt
+```
+
 
 ### Configure Environment Variables
 
