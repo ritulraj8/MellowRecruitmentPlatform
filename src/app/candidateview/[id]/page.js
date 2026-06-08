@@ -18,9 +18,20 @@ function formatDate(dateString) {
   });
 }
 
-export default async function CandidateView({ params }) {
+export default async function CandidateView({ params, searchParams }) {
   const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
   const candidateId = Number(resolvedParams.id);
+  const from = resolvedSearchParams?.from || 'candidatelist';
+  const jobId = resolvedSearchParams?.jobId;
+
+  const backHref = from === 'jobmatching'
+    ? `/jobmatching${jobId ? `?jobId=${jobId}` : ''}`
+    : '/candidatelist';
+
+  const backLabel = from === 'jobmatching'
+    ? 'Back to job matching'
+    : 'Back to candidate list';
   if (!candidateId || Number.isNaN(candidateId)) {
     return (
       <main className="min-h-screen bg-slate-50 text-slate-950">
@@ -58,7 +69,7 @@ export default async function CandidateView({ params }) {
     <main className="min-h-screen bg-slate-50 text-slate-950">
       <section className="relative overflow-hidden px-6 py-16 sm:px-10 lg:px-16">
         <div className="mx-auto max-w-4xl">
-          <BackButton fallbackHref="/candidatelist" forceFallback={true} />
+          <BackButton fallbackHref={backHref} forceFallback={true} />
           <div className="mb-10 rounded-[2rem] border border-slate-200 bg-white p-8 shadow-2xl shadow-slate-200/50">
             <p className="text-sm uppercase tracking-[0.32em] text-cyan-600">Candidate details</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
@@ -101,10 +112,10 @@ export default async function CandidateView({ params }) {
                 Download resume
               </a>
               <a
-                href="/candidatelist"
+                href={backHref}
                 className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-950 transition hover:border-slate-400 hover:bg-slate-50"
               >
-                Back to candidate list
+                {backLabel}
               </a>
             </div>
           </div>

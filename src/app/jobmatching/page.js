@@ -175,7 +175,7 @@ function JobMatchingComponent() {
   }
 
   function handleViewCandidate(candidateId) {
-    router.push(`/candidateview/${candidateId}`);
+    router.push(`/candidateview/${candidateId}?from=jobmatching${selectedJobId ? `&jobId=${selectedJobId}` : ''}`);
   }
 
   async function handleSelectCandidate(candidateId, jobId) {
@@ -317,8 +317,12 @@ function JobMatchingComponent() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-200">
-                          {paginatedMatches.map((candidate) => (
-                            <tr key={candidate.id} className="hover:bg-slate-50 transition">
+                          {paginatedMatches.map((candidate, index) => (
+                            <tr
+                              key={candidate.id}
+                              className="hover:bg-slate-50 transition animate-fade-in-up"
+                              style={{ animationDelay: `${index * 75}ms` }}
+                            >
                               <td className="px-6 py-4 font-semibold text-slate-950">{candidate.rank}</td>
                               <td className="px-6 py-4 text-slate-950">{candidate.first_name || '—'}</td>
                               <td className="px-6 py-4 text-slate-950">{candidate.last_name || '—'}</td>
