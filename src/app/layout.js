@@ -1,5 +1,6 @@
 import './globals.css';
 import InactivityTracker from '@/components/InactivityTracker';
+import ClientLayout from '@/components/ClientLayout';
 
 export const metadata = {
   title: 'Mellow',
@@ -11,7 +12,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <InactivityTracker />
-        {children}
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );

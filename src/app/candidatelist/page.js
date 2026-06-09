@@ -13,6 +13,8 @@ export default function CandidateList() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [sortBy, setSortBy] = useState('id');
+  const [sortOrder, setSortOrder] = useState('desc');
 
   useEffect(() => {
     const controller = new AbortController();
@@ -25,6 +27,8 @@ export default function CandidateList() {
           page: String(page),
           limit: String(RESULTS_PER_PAGE),
           search: searchValue,
+          sortBy,
+          sortOrder,
         });
 
         const response = await fetch(`/api/candidates?${params.toString()}`, {
@@ -51,7 +55,7 @@ export default function CandidateList() {
     loadCandidates();
 
     return () => controller.abort();
-  }, [page, searchValue]);
+  }, [page, searchValue, sortBy, sortOrder]);
 
   const totalPages = Math.max(1, Math.ceil(total / RESULTS_PER_PAGE));
   const startIndex = total === 0 ? 0 : (page - 1) * RESULTS_PER_PAGE + 1;
@@ -68,6 +72,41 @@ export default function CandidateList() {
       setPage(newPage);
     }
   }
+
+  function handleSort(field) {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+    setPage(1);
+  }
+
+  const renderSortIcon = (field) => {
+    const isActive = sortBy === field;
+    if (!isActive) {
+      return (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+        </svg>
+      );
+    }
+    if (sortOrder === 'asc') {
+      return (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          {/* Sort Ascending Icon: text lines + arrow up */}
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h10M3 10h7M3 16h7M18 5v14M15 8l3-3 3 3" />
+        </svg>
+      );
+    }
+    return (
+      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        {/* Sort Descending Icon: text lines + arrow down */}
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h10M3 10h7M3 16h7M18 5v14M15 16l3 3 3-3" />
+      </svg>
+    );
+  };
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
@@ -108,11 +147,71 @@ export default function CandidateList() {
               <table className="min-w-full divide-y divide-slate-200 text-sm">
                 <thead>
                   <tr className="bg-slate-50 text-left text-slate-700">
-                    <th className="px-4 py-3">First Name</th>
-                    <th className="px-4 py-3">Last Name</th>
-                    <th className="px-4 py-3">Email</th>
-                    <th className="px-4 py-3">Phone</th>
-                    <th className="px-4 py-3">Actions</th>
+                    <th className="px-4 py-3 select-none text-slate-700 font-semibold text-left">
+                      <div className="flex items-center justify-between gap-2">
+                        <span>First Name</span>
+                        <button
+                          onClick={() => handleSort('first_name')}
+                          className={`p-1.5 rounded-lg transition-all duration-150 focus:outline-none ${
+                            sortBy === 'first_name'
+                              ? 'bg-cyan-50 text-cyan-600 border border-cyan-200'
+                              : 'text-slate-400 hover:bg-cyan-50 hover:text-cyan-600'
+                          }`}
+                          title="Sort by First Name"
+                        >
+                          {renderSortIcon('first_name')}
+                        </button>
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 select-none text-slate-700 font-semibold text-left">
+                      <div className="flex items-center justify-between gap-2">
+                        <span>Last Name</span>
+                        <button
+                          onClick={() => handleSort('last_name')}
+                          className={`p-1.5 rounded-lg transition-all duration-150 focus:outline-none ${
+                            sortBy === 'last_name'
+                              ? 'bg-cyan-50 text-cyan-600 border border-cyan-200'
+                              : 'text-slate-400 hover:bg-cyan-50 hover:text-cyan-600'
+                          }`}
+                          title="Sort by Last Name"
+                        >
+                          {renderSortIcon('last_name')}
+                        </button>
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 select-none text-slate-700 font-semibold text-left">
+                      <div className="flex items-center justify-between gap-2">
+                        <span>Email</span>
+                        <button
+                          onClick={() => handleSort('email')}
+                          className={`p-1.5 rounded-lg transition-all duration-150 focus:outline-none ${
+                            sortBy === 'email'
+                              ? 'bg-cyan-50 text-cyan-600 border border-cyan-200'
+                              : 'text-slate-400 hover:bg-cyan-50 hover:text-cyan-600'
+                          }`}
+                          title="Sort by Email"
+                        >
+                          {renderSortIcon('email')}
+                        </button>
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 select-none text-slate-700 font-semibold text-left">
+                      <div className="flex items-center justify-between gap-2">
+                        <span>Phone</span>
+                        <button
+                          onClick={() => handleSort('phone')}
+                          className={`p-1.5 rounded-lg transition-all duration-150 focus:outline-none ${
+                            sortBy === 'phone'
+                              ? 'bg-cyan-50 text-cyan-600 border border-cyan-200'
+                              : 'text-slate-400 hover:bg-cyan-50 hover:text-cyan-600'
+                          }`}
+                          title="Sort by Phone"
+                        >
+                          {renderSortIcon('phone')}
+                        </button>
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 select-none">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">

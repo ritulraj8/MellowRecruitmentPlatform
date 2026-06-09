@@ -11,10 +11,16 @@ export async function GET(req) {
   try {
     const searchParams = req.nextUrl.searchParams;
     const all = searchParams.get('all') === 'true';
-    const { search = '', page = '1', limit = '10' } = Object.fromEntries(searchParams.entries());
+    const { search = '', page = '1', limit = '10', sortBy = 'id', sortOrder = 'desc' } = Object.fromEntries(searchParams.entries());
     const pageNumber = Math.max(1, Number(page) || 1);
     const pageSize = Math.max(1, Number(limit) || 10);
     const offset = (pageNumber - 1) * pageSize;
+
+    const allowedSortFields = ['first_name', 'last_name', 'email', 'phone', 'id'];
+    const allowedSortOrders = ['asc', 'desc'];
+    const field = allowedSortFields.includes(sortBy) ? sortBy : 'id';
+    const order = allowedSortOrders.includes(sortOrder.toLowerCase()) ? sortOrder.toLowerCase() : 'desc';
+    const orderClause = `ORDER BY ${field} ${order.toUpperCase()}`;
 
     const searchValue = `%${search.trim().toLowerCase()}%`;
 
@@ -27,12 +33,12 @@ export async function GET(req) {
     let rowsResult;
     if (all) {
       rowsResult = await pool.query(
-        'SELECT id, first_name, last_name, email, phone, resume_path FROM "CANDIDATES" WHERE LOWER(first_name) LIKE $1 OR LOWER(last_name) LIKE $1 OR LOWER(email) LIKE $1 ORDER BY id DESC',
+        `SELECT id, first_name, last_name, email, phone, resume_path FROM "CANDIDATES" WHERE LOWER(first_name) LIKE $1 OR LOWER(last_name) LIKE $1 OR LOWER(email) LIKE $1 ${orderClause}`,
         [searchValue]
       );
     } else {
       rowsResult = await pool.query(
-        'SELECT id, first_name, last_name, email, phone, resume_path FROM "CANDIDATES" WHERE LOWER(first_name) LIKE $1 OR LOWER(last_name) LIKE $1 OR LOWER(email) LIKE $1 ORDER BY id DESC LIMIT $2 OFFSET $3',
+        `SELECT id, first_name, last_name, email, phone, resume_path FROM "CANDIDATES" WHERE LOWER(first_name) LIKE $1 OR LOWER(last_name) LIKE $1 OR LOWER(email) LIKE $1 ${orderClause} LIMIT $2 OFFSET $3`,
         [searchValue, pageSize, offset]
       );
     }

@@ -164,6 +164,11 @@ function CandidateOnboardingForm() {
 
       setSuccess(isEditMode ? 'Candidate details updated successfully.' : 'Candidate details saved successfully.');
       setErrors([]);
+      setFirstName('');
+      setLastName('');
+      setEmail('');
+      setPhone('');
+      setDob('');
       setResumeFile(null);
       setLoading(false);
     } catch (err) {
@@ -303,6 +308,7 @@ function CandidateOnboardingForm() {
                   Resume File
                 </label>
                 <input
+                  key={resumeFile ? resumeFile.name : 'empty'}
                   id="resume"
                   name="resume"
                   type="file"
