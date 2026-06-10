@@ -1,8 +1,45 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
+}
+
+.dark {
+  --background: #0b0f19;
+  --foreground: #f1f5f9;
+
+  /* Tailwind CSS v4 color token overrides in dark mode */
+  --color-white: #111827; /* slate-900 for card backgrounds */
+  --color-slate-50: #0b0f19; /* dark background */
+  --color-slate-100: #1f2937; /* hover backgrounds, tables */
+  --color-slate-200: #1f2937; /* border-slate-200 */
+  --color-slate-300: #374151; /* border-slate-300 */
+  --color-slate-400: #9ca3af;
+  --color-slate-500: #6b7280;
+  --color-slate-600: #9ca3af;
+  --color-slate-700: #cbd5e1;
+  --color-slate-800: #e5e7eb;
+  --color-slate-900: #f3f4f6;
+  --color-slate-950: #f9fafb;
+
+  /* Cyan highlights in dark mode */
+  --color-cyan-50: rgba(6, 182, 212, 0.15); /* cyan-950 equivalent for active bg */
+  --color-cyan-100: #083344;
+  --color-cyan-600: #22d3ee; /* light cyan-400 for tags/labels */
+  --color-cyan-800: #67e8f9; /* cyan-300 for highlights */
+
+  /* Fix for red alert blocks */
+  --color-red-50: rgba(239, 68, 68, 0.1);
+  --color-red-100: #7f1d1d;
+  --color-red-700: #fca5a5;
+
+  /* Fix for green alert blocks */
+  --color-green-50: rgba(34, 197, 94, 0.15);
+  --color-green-100: #064e3b;
+  --color-green-700: #86efac;
 }
 
 @theme inline {
@@ -10,13 +47,6 @@
   --color-foreground: var(--foreground);
   --font-sans: Inter, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, monospace;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f172a;
-    --foreground: #e2e8f0;
-  }
 }
 
 html {
@@ -29,6 +59,7 @@ body {
   font-family: var(--font-sans);
   min-height: 100vh;
   margin: 0;
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 * {
@@ -54,4 +85,12 @@ body {
 .animate-fade-in-up {
   opacity: 0;
   animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Custom hover overrides in dark mode */
+.dark .hover\:bg-slate-50:hover {
+  background-color: #1f2937 !important;
+}
+.dark .hover\:bg-white:hover {
+  background-color: #1f2937 !important;
 }

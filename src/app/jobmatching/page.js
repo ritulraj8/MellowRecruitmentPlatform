@@ -7,6 +7,39 @@ import Pagination from '../../components/Pagination';
 
 const FLASK_API_URL = process.env.NEXT_PUBLIC_FLASK_API_URL || 'http://localhost:5000';
 
+const STAGE_ORDER = [
+  'Initial Screening',
+  'Phone / Video Interview',
+  'Technical Assessment',
+  'HR Interview',
+  'Final Decision',
+];
+
+function getActiveStage(selection) {
+  if (!selection || !selection.steps) return null;
+  
+  const steps = selection.steps;
+  
+  // Find the first step in order that is NOT completed
+  // (i.e. status is Pending, In Progress, On Hold, etc.)
+  for (const stageName of STAGE_ORDER) {
+    const step = steps.find(s => s.stage_name === stageName);
+    if (step) {
+      if (step.status !== 'Completed' && step.status !== 'Accepted' && step.status !== 'Rejected') {
+        return { stage_name: step.stage_name, status: step.status };
+      }
+    }
+  }
+  
+  // If all are completed, show the final decision stage status (e.g. Accepted, Rejected, or Completed)
+  const finalStep = steps.find(s => s.stage_name === 'Final Decision');
+  if (finalStep) {
+    return { stage_name: 'Final Decision', status: finalStep.status };
+  }
+  
+  return null;
+}
+
 
 function JobMatchingComponent() {
   const router = useRouter();
@@ -19,7 +52,20 @@ function JobMatchingComponent() {
   const [error, setError] = useState('');
   const [matchPage, setMatchPage] = useState(1);
   const [candidateSearch, setCandidateSearch] = useState('');
+  const [selections, setSelections] = useState([]);
   const matchLimit = 10;
+
+  async function loadSelections() {
+    try {
+      const response = await fetch('/api/candidate-selections');
+      if (response.ok) {
+        const data = await response.json();
+        setSelections(data.selections || []);
+      }
+    } catch (err) {
+      console.error('Error loading selections:', err);
+    }
+  }
 
   useEffect(() => {
     let active = true;
@@ -49,6 +95,7 @@ function JobMatchingComponent() {
     }
 
     loadJobs();
+    loadSelections();
     return () => {
       active = false;
     };
@@ -250,24 +297,29 @@ function JobMatchingComponent() {
                 </div>
 
                 <div className="mt-6 space-y-5">
-                  <label className="block text-sm font-medium text-slate-700">Available jobs</label>
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 shadow-sm">
-                    <select
-                      value={selectedJobId}
-                      onChange={(event) => setSelectedJobId(event.target.value)}
-                      disabled={loadingJobs}
-                      className="w-full bg-transparent text-sm text-slate-950 outline-none disabled:opacity-50"
-                    >
-                      <option value="">
-                        {loadingJobs ? 'Loading jobs...' : 'Select a job'}
-                      </option>
-                      {jobs.map((job) => (
-                        <option key={job.id} value={job.id}>
-                          {job.title}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                   <label className="block text-sm font-medium text-slate-700">Available jobs</label>
+                   <div className="relative">
+                     <select
+                       value={selectedJobId}
+                       onChange={(event) => setSelectedJobId(event.target.value)}
+                       disabled={loadingJobs}
+                       className="w-full appearance-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 pr-10 text-sm text-slate-950 outline-none transition-all focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100/60 dark:focus:ring-cyan-950/40 disabled:opacity-50"
+                     >
+                       <option value="">
+                         {loadingJobs ? 'Loading jobs...' : 'Select a job'}
+                       </option>
+                       {jobs.map((job) => (
+                         <option key={job.id} value={job.id}>
+                           {job.title}
+                         </option>
+                       ))}
+                     </select>
+                     <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-500">
+                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                       </svg>
+                     </div>
+                   </div>
 
                   {selectedJob && (
                     <div className="rounded-[1.75rem] border border-slate-200 bg-slate-50 p-6">
@@ -351,40 +403,76 @@ function JobMatchingComponent() {
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-200">
-                              {paginatedMatches.map((candidate, index) => (
-                                <tr
-                                  key={candidate.id}
-                                  className="hover:bg-slate-50 transition animate-fade-in-up"
-                                  style={{ animationDelay: `${index * 75}ms` }}
-                                >
-                                  <td className="px-6 py-4 font-semibold text-slate-950">{candidate.rank}</td>
-                                  <td className="px-6 py-4 text-slate-950">{candidate.first_name || '—'}</td>
-                                  <td className="px-6 py-4 text-slate-950">{candidate.last_name || '—'}</td>
-                                  <td className="px-6 py-4 text-slate-600">{candidate.email || '—'}</td>
-                                  <td className="px-6 py-4 text-center">
-                                    <span className="inline-flex items-center justify-center rounded-full bg-cyan-100 px-3 py-1 text-sm font-semibold text-cyan-700">
-                                      {Math.round(candidate.score)}%
-                                    </span>
-                                  </td>
-                                  <td className="px-6 py-4 text-center">
-                                    <div className="flex items-center justify-center gap-3">
-                                      <button
-                                        onClick={() => handleViewCandidate(candidate.id)}
-                                        className="text-sm font-medium text-cyan-600 hover:text-cyan-700 hover:underline transition"
-                                      >
-                                        View
-                                      </button>
-                                      <span className="text-slate-300">|</span>
-                                      <button
-                                        onClick={() => handleSelectCandidate(candidate.id, selectedJob.id)}
-                                        className="text-sm font-medium text-slate-950 hover:text-slate-700 hover:underline transition"
-                                      >
-                                        Select
-                                      </button>
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))}
+                              {paginatedMatches.map((candidate, index) => {
+                                const selection = selections.find(
+                                  (s) => String(s.candidate_id) === String(candidate.id) && String(s.job_id) === String(selectedJobId)
+                                );
+                                const isSelected = !!selection;
+                                const activeStage = isSelected ? getActiveStage(selection) : null;
+
+                                return (
+                                  <tr
+                                    key={candidate.id}
+                                    className={`transition animate-fade-in-up ${
+                                      isSelected
+                                        ? 'bg-cyan-50/20 hover:bg-cyan-50/45 dark:bg-cyan-950/5 dark:hover:bg-cyan-950/10'
+                                        : 'hover:bg-slate-50'
+                                    }`}
+                                    style={{ animationDelay: `${index * 75}ms` }}
+                                  >
+                                    <td className={`px-6 py-4 font-semibold text-slate-950 ${isSelected ? 'border-l-4 border-cyan-500 pl-5' : ''}`}>{candidate.rank}</td>
+                                    <td className="px-6 py-4 text-slate-950">{candidate.first_name || '—'}</td>
+                                    <td className="px-6 py-4 text-slate-950">{candidate.last_name || '—'}</td>
+                                    <td className="px-6 py-4 text-slate-600">{candidate.email || '—'}</td>
+                                    <td className="px-6 py-4 text-center">
+                                      <span className="inline-flex items-center justify-center rounded-full bg-cyan-100 px-3 py-1 text-sm font-semibold text-cyan-700">
+                                        {Math.round(candidate.score)}%
+                                      </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                      <div className="flex items-center justify-center gap-3">
+                                        <button
+                                          onClick={() => handleViewCandidate(candidate.id)}
+                                          className="text-sm font-medium text-cyan-600 hover:text-cyan-700 hover:underline transition"
+                                        >
+                                          View
+                                        </button>
+                                        {isSelected ? (
+                                          <>
+                                            <span className="text-slate-300 dark:text-slate-700">|</span>
+                                            <span className="inline-flex flex-col items-center">
+                                              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                {activeStage ? activeStage.stage_name : 'Pipeline'}
+                                              </span>
+                                              <span className={`mt-0.5 inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                                                activeStage?.status === 'Completed' || activeStage?.status === 'Accepted'
+                                                  ? 'bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400'
+                                                  : activeStage?.status === 'Rejected'
+                                                  ? 'bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-400'
+                                                  : activeStage?.status === 'In Progress'
+                                                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400'
+                                                  : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                                              }`}>
+                                                {activeStage ? activeStage.status : 'Pending'}
+                                              </span>
+                                            </span>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <span className="text-slate-300">|</span>
+                                            <button
+                                              onClick={() => handleSelectCandidate(candidate.id, selectedJob.id)}
+                                              className="text-sm font-medium text-slate-950 hover:text-slate-700 hover:underline transition"
+                                            >
+                                              Select
+                                            </button>
+                                          </>
+                                        )}
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
                             </tbody>
                           </table>
                         </div>

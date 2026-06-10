@@ -1,9 +1,8 @@
 import bcrypt from 'bcryptjs';
-import { neonConfig, Pool } from '@neondatabase/serverless';
-import ws from 'ws';
+import { Pool } from 'pg';
 import { signJWT } from '@/lib/jwt';
 
-neonConfig.webSocketConstructor = ws;
+
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,

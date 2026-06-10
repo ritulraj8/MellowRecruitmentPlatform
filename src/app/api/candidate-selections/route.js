@@ -1,8 +1,5 @@
 import { NextResponse } from 'next/server';
-import { neonConfig, Pool } from '@neondatabase/serverless';
-import ws from 'ws';
-
-neonConfig.webSocketConstructor = ws;
+import { Pool } from 'pg';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -94,7 +91,13 @@ export async function GET() {
         c.phone,
 
         j.id AS job_id,
-        j.title AS job_title
+        j.title AS job_title,
+
+        (
+          SELECT json_agg(json_build_object('id', rs.id, 'stage_name', rs.stage_name, 'status', rs.status) ORDER BY rs.id)
+          FROM recruitment_steps rs
+          WHERE rs.selection_id = cs.id
+        ) AS steps
 
       FROM candidate_selections cs
 
