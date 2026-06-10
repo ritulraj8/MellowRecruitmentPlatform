@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import BackButton from '../../components/BackButton';
 import Pagination from '../../components/Pagination';
 
@@ -37,12 +38,12 @@ export default function JobListingPage() {
         const data = await response.json();
         setJobs(data.jobs || []);
         setTotal(data.total || 0);
+        setLoading(false);
       } catch (err) {
         if (err.name !== 'AbortError') {
           setError('Unable to load jobs. Please try again.');
+          setLoading(false);
         }
-      } finally {
-        setLoading(false);
       }
     }
 
@@ -107,15 +108,11 @@ export default function JobListingPage() {
               </button>
             </form>
 
-            {loading ? (
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-10 text-center text-sm text-slate-600">
-                Loading job postings...
-              </div>
-            ) : error ? (
+            {error ? (
               <div className="rounded-3xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
                 {error}
               </div>
-            ) : jobs.length === 0 ? (
+            ) : !loading && jobs.length === 0 ? (
               <div className="rounded-3xl border border-slate-200 bg-slate-50 p-10 text-center text-sm text-slate-600">
                 No jobs match your search.
               </div>
@@ -132,38 +129,56 @@ export default function JobListingPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 bg-white">
-                      {jobs.map((job) => (
-                        <tr key={job.id} className="hover:bg-slate-50">
-                          <td className="px-4 py-4 font-semibold text-slate-950">{job.title}</td>
-                          <td className="px-4 py-4 text-slate-700">{getPreview(job.description)}</td>
-                          <td className="px-4 py-4 text-slate-700">{formatDate(job.created_at)}</td>
-                          <td className="px-4 py-4 text-slate-950">
-                            <div className="flex flex-wrap gap-3">
-                              <a
-                                href={`/jobview/${job.id}`}
-                                className="text-sm font-semibold text-cyan-700 hover:text-cyan-900"
-                              >
-                                View
-                              </a>
-                              <span className="text-slate-400">|</span>
-                              <a
-                                href={`/jobmatching?jobId=${job.id}`}
-                                className="text-sm font-semibold text-cyan-700 hover:text-cyan-900"
-                              >
-                                Match
-                              </a>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                      {loading ? (
+                        Array.from({ length: 5 }).map((_, idx) => (
+                          <tr key={idx} className="animate-pulse">
+                            <td className="px-4 py-4"><div className="h-4 w-40 rounded bg-slate-200 dark:bg-slate-800"></div></td>
+                            <td className="px-4 py-4"><div className="h-4 w-80 rounded bg-slate-200 dark:bg-slate-800"></div></td>
+                            <td className="px-4 py-4"><div className="h-4 w-24 rounded bg-slate-200 dark:bg-slate-800"></div></td>
+                            <td className="px-4 py-4">
+                              <div className="flex gap-3">
+                                <div className="h-4 w-10 rounded bg-slate-200 dark:bg-slate-800"></div>
+                                <div className="h-4 w-10 rounded bg-slate-200 dark:bg-slate-800"></div>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        jobs.map((job) => (
+                          <tr key={job.id} className="hover:bg-slate-50">
+                            <td className="px-4 py-4 font-semibold text-slate-950">{job.title}</td>
+                            <td className="px-4 py-4 text-slate-700">{getPreview(job.description)}</td>
+                            <td className="px-4 py-4 text-slate-700">{formatDate(job.created_at)}</td>
+                            <td className="px-4 py-4 text-slate-950">
+                              <div className="flex flex-wrap gap-3">
+                                <Link
+                                  href={`/jobview/${job.id}`}
+                                  className="text-sm font-semibold text-cyan-700 hover:text-cyan-900"
+                                >
+                                  View
+                                </Link>
+                                <span className="text-slate-400">|</span>
+                                <Link
+                                  href={`/jobmatching?jobId=${job.id}`}
+                                  className="text-sm font-semibold text-cyan-700 hover:text-cyan-900"
+                                >
+                                  Match
+                                </Link>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
-                <Pagination
-                  currentPage={page}
-                  totalPages={Math.ceil(total / limit)}
-                  onPageChange={setPage}
-                />
+                {!loading && (
+                  <Pagination
+                    currentPage={page}
+                    totalPages={Math.ceil(total / limit)}
+                    onPageChange={setPage}
+                  />
+                )}
               </>
             )}
           </div>

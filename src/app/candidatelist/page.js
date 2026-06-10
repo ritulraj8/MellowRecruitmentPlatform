@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import BackButton from '../../components/BackButton';
 
 const RESULTS_PER_PAGE = 10;
@@ -11,7 +12,7 @@ export default function CandidateList() {
   const [candidates, setCandidates] = useState([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [sortBy, setSortBy] = useState('id');
   const [sortOrder, setSortOrder] = useState('desc');
@@ -42,13 +43,13 @@ export default function CandidateList() {
         const data = await response.json();
         setCandidates(data.candidates || []);
         setTotal(data.total || 0);
+        setLoading(false);
       } catch (err) {
         if (err.name !== 'AbortError') {
           console.error('Candidate list error:', err);
           setError('Error loading candidates. Please try again.');
+          setLoading(false);
         }
-      } finally {
-        setLoading(false);
       }
     }
 
@@ -216,11 +217,15 @@ export default function CandidateList() {
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">
                   {loading ? (
-                    <tr>
-                      <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
-                        Loading candidates...
-                      </td>
-                    </tr>
+                    Array.from({ length: 5 }).map((_, idx) => (
+                      <tr key={idx} className="animate-pulse">
+                        <td className="px-4 py-4"><div className="h-4 w-24 rounded bg-slate-200 dark:bg-slate-800"></div></td>
+                        <td className="px-4 py-4"><div className="h-4 w-28 rounded bg-slate-200 dark:bg-slate-800"></div></td>
+                        <td className="px-4 py-4"><div className="h-4 w-40 rounded bg-slate-200 dark:bg-slate-800"></div></td>
+                        <td className="px-4 py-4"><div className="h-4 w-32 rounded bg-slate-200 dark:bg-slate-800"></div></td>
+                        <td className="px-4 py-4"><div className="h-4 w-16 rounded bg-slate-200 dark:bg-slate-800"></div></td>
+                      </tr>
+                    ))
                   ) : candidates.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
@@ -236,19 +241,19 @@ export default function CandidateList() {
                         <td className="px-4 py-4 text-slate-950">{candidate.phone}</td>
                         <td className="px-4 py-4 text-slate-950">
                           <div className="flex flex-wrap gap-3">
-                            <a
+                            <Link
                               href={`/candidateview/${candidate.id}`}
                               className="text-sm font-semibold text-cyan-700 hover:text-cyan-900"
                             >
                               View
-                            </a>
+                            </Link>
                             <span className="text-slate-400">|</span>
-                            <a
+                            <Link
                               href={`/candidateonboarding?id=${candidate.id}`}
                               className="text-sm font-semibold text-cyan-700 hover:text-cyan-900"
                             >
                               Edit
-                            </a>
+                            </Link>
                           </div>
                         </td>
                       </tr>
