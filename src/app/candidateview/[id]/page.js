@@ -1,4 +1,7 @@
-import { Pool } from 'pg';
+import { neonConfig, Pool } from '@neondatabase/serverless';
+import ws from 'ws';
+
+neonConfig.webSocketConstructor = ws;
 import BackButton from '../../../components/BackButton';
 
 const pool = new Pool({

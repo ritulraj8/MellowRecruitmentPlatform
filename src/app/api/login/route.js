@@ -1,5 +1,8 @@
 import bcrypt from 'bcryptjs';
-import { Pool } from 'pg';
+import { neonConfig, Pool } from '@neondatabase/serverless';
+import ws from 'ws';
+
+neonConfig.webSocketConstructor = ws;
 import { signJWT } from '@/lib/jwt';
 
 
