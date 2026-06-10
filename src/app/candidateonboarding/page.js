@@ -17,6 +17,7 @@ function CandidateOnboardingForm() {
   const [resumeFile, setResumeFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingCandidate, setLoadingCandidate] = useState(false);
+  const [fileInputKey, setFileInputKey] = useState(0);
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -170,6 +171,7 @@ function CandidateOnboardingForm() {
       setPhone('');
       setDob('');
       setResumeFile(null);
+      setFileInputKey((prev) => prev + 1);
       setLoading(false);
     } catch (err) {
       setErrors(['Something went wrong. Please try again.']);
@@ -308,7 +310,7 @@ function CandidateOnboardingForm() {
                   Resume File
                 </label>
                 <input
-                  key={resumeFile ? resumeFile.name : 'empty'}
+                  key={fileInputKey}
                   id="resume"
                   name="resume"
                   type="file"

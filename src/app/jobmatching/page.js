@@ -18,6 +18,7 @@ function JobMatchingComponent() {
   const [loadingMatches, setLoadingMatches] = useState(false);
   const [error, setError] = useState('');
   const [matchPage, setMatchPage] = useState(1);
+  const [candidateSearch, setCandidateSearch] = useState('');
   const matchLimit = 10;
 
   useEffect(() => {
@@ -69,10 +70,20 @@ function JobMatchingComponent() {
     [jobs, selectedJobId]
   );
 
+  const filteredMatches = useMemo(() => {
+    if (!candidateSearch.trim()) return matches;
+    const term = candidateSearch.toLowerCase().trim();
+    return matches.filter(
+      (candidate) =>
+        (candidate.first_name || '').toLowerCase().includes(term) ||
+        (candidate.last_name || '').toLowerCase().includes(term)
+    );
+  }, [matches, candidateSearch]);
+
   const paginatedMatches = useMemo(() => {
     const start = (matchPage - 1) * matchLimit;
-    return matches.slice(start, start + matchLimit);
-  }, [matches, matchPage, matchLimit]);
+    return filteredMatches.slice(start, start + matchLimit);
+  }, [filteredMatches, matchPage, matchLimit]);
 
   async function handleFindMatches() {
     setError('');
@@ -83,6 +94,7 @@ function JobMatchingComponent() {
 
     setLoadingMatches(true);
     setMatches([]);
+    setCandidateSearch('');
 
     try {
       const response = await fetch('/api/candidates?all=true');
@@ -304,61 +316,85 @@ function JobMatchingComponent() {
                   </div>
                 ) : (
                   <>
-                    <div className="overflow-x-auto rounded-2xl border border-slate-200">
-                      <table className="w-full text-sm">
-                        <thead className="bg-slate-50 border-b border-slate-200">
-                          <tr>
-                            <th className="px-6 py-4 text-left font-semibold text-slate-700">Rank</th>
-                            <th className="px-6 py-4 text-left font-semibold text-slate-700">First Name</th>
-                            <th className="px-6 py-4 text-left font-semibold text-slate-700">Last Name</th>
-                            <th className="px-6 py-4 text-left font-semibold text-slate-700">Email</th>
-                            <th className="px-6 py-4 text-center font-semibold text-slate-700">Match %</th>
-                            <th className="px-6 py-4 text-center font-semibold text-slate-700">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-200">
-                          {paginatedMatches.map((candidate, index) => (
-                            <tr
-                              key={candidate.id}
-                              className="hover:bg-slate-50 transition animate-fade-in-up"
-                              style={{ animationDelay: `${index * 75}ms` }}
-                            >
-                              <td className="px-6 py-4 font-semibold text-slate-950">{candidate.rank}</td>
-                              <td className="px-6 py-4 text-slate-950">{candidate.first_name || '—'}</td>
-                              <td className="px-6 py-4 text-slate-950">{candidate.last_name || '—'}</td>
-                              <td className="px-6 py-4 text-slate-600">{candidate.email || '—'}</td>
-                              <td className="px-6 py-4 text-center">
-                                <span className="inline-flex items-center justify-center rounded-full bg-cyan-100 px-3 py-1 text-sm font-semibold text-cyan-700">
-                                  {Math.round(candidate.score)}%
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 text-center">
-                                <div className="flex items-center justify-center gap-3">
-                                  <button
-                                    onClick={() => handleViewCandidate(candidate.id)}
-                                    className="text-sm font-medium text-cyan-600 hover:text-cyan-700 hover:underline transition"
-                                  >
-                                    View
-                                  </button>
-                                  <span className="text-slate-300">|</span>
-                                  <button
-                                    onClick={() => handleSelectCandidate(candidate.id, selectedJob.id)}
-                                    className="text-sm font-medium text-slate-950 hover:text-slate-700 hover:underline transition"
-                                  >
-                                    Select
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                    <div className="mb-6 max-w-md">
+                      <label className="relative block">
+                        <span className="sr-only">Search candidates</span>
+                        <input
+                          type="text"
+                          value={candidateSearch}
+                          onChange={(e) => {
+                            setCandidateSearch(e.target.value);
+                            setMatchPage(1);
+                          }}
+                          placeholder="Search candidates by name..."
+                          className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm text-slate-950 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+                        />
+                      </label>
                     </div>
-                    <Pagination
-                      currentPage={matchPage}
-                      totalPages={Math.ceil(matches.length / matchLimit)}
-                      onPageChange={setMatchPage}
-                    />
+
+                    {filteredMatches.length === 0 ? (
+                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-600">
+                        No candidates match "{candidateSearch}"
+                      </div>
+                    ) : (
+                      <>
+                        <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                          <table className="w-full text-sm">
+                            <thead className="bg-slate-50 border-b border-slate-200">
+                              <tr>
+                                <th className="px-6 py-4 text-left font-semibold text-slate-700">Rank</th>
+                                <th className="px-6 py-4 text-left font-semibold text-slate-700">First Name</th>
+                                <th className="px-6 py-4 text-left font-semibold text-slate-700">Last Name</th>
+                                <th className="px-6 py-4 text-left font-semibold text-slate-700">Email</th>
+                                <th className="px-6 py-4 text-center font-semibold text-slate-700">Match %</th>
+                                <th className="px-6 py-4 text-center font-semibold text-slate-700">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-200">
+                              {paginatedMatches.map((candidate, index) => (
+                                <tr
+                                  key={candidate.id}
+                                  className="hover:bg-slate-50 transition animate-fade-in-up"
+                                  style={{ animationDelay: `${index * 75}ms` }}
+                                >
+                                  <td className="px-6 py-4 font-semibold text-slate-950">{candidate.rank}</td>
+                                  <td className="px-6 py-4 text-slate-950">{candidate.first_name || '—'}</td>
+                                  <td className="px-6 py-4 text-slate-950">{candidate.last_name || '—'}</td>
+                                  <td className="px-6 py-4 text-slate-600">{candidate.email || '—'}</td>
+                                  <td className="px-6 py-4 text-center">
+                                    <span className="inline-flex items-center justify-center rounded-full bg-cyan-100 px-3 py-1 text-sm font-semibold text-cyan-700">
+                                      {Math.round(candidate.score)}%
+                                    </span>
+                                  </td>
+                                  <td className="px-6 py-4 text-center">
+                                    <div className="flex items-center justify-center gap-3">
+                                      <button
+                                        onClick={() => handleViewCandidate(candidate.id)}
+                                        className="text-sm font-medium text-cyan-600 hover:text-cyan-700 hover:underline transition"
+                                      >
+                                        View
+                                      </button>
+                                      <span className="text-slate-300">|</span>
+                                      <button
+                                        onClick={() => handleSelectCandidate(candidate.id, selectedJob.id)}
+                                        className="text-sm font-medium text-slate-950 hover:text-slate-700 hover:underline transition"
+                                      >
+                                        Select
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        <Pagination
+                          currentPage={matchPage}
+                          totalPages={Math.ceil(filteredMatches.length / matchLimit)}
+                          onPageChange={setMatchPage}
+                        />
+                      </>
+                    )}
                   </>
                 )}
               </div>
