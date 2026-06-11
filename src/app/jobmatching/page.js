@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import BackButton from '../../components/BackButton';
 import Pagination from '../../components/Pagination';
+import CustomSelect from '../../components/CustomSelect';
 
 const FLASK_API_URL = process.env.NEXT_PUBLIC_FLASK_API_URL || 'http://localhost:5000';
 
@@ -115,6 +116,14 @@ function JobMatchingComponent() {
   const selectedJob = useMemo(
     () => jobs.find((job) => String(job.id) === String(selectedJobId)) || null,
     [jobs, selectedJobId]
+  );
+
+  const jobOptions = useMemo(
+    () => [
+      { value: '', label: loadingJobs ? 'Loading jobs...' : 'Select a job' },
+      ...jobs.map((job) => ({ value: String(job.id), label: job.title })),
+    ],
+    [jobs, loadingJobs]
   );
 
   const filteredMatches = useMemo(() => {
@@ -298,28 +307,14 @@ function JobMatchingComponent() {
 
                 <div className="mt-6 space-y-5">
                    <label className="block text-sm font-medium text-slate-700">Available jobs</label>
-                   <div className="relative">
-                     <select
-                       value={selectedJobId}
-                       onChange={(event) => setSelectedJobId(event.target.value)}
-                       disabled={loadingJobs}
-                       className="w-full appearance-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 pr-10 text-sm text-slate-950 outline-none transition-all focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100/60 dark:focus:ring-cyan-950/40 disabled:opacity-50"
-                     >
-                       <option value="">
-                         {loadingJobs ? 'Loading jobs...' : 'Select a job'}
-                       </option>
-                       {jobs.map((job) => (
-                         <option key={job.id} value={job.id}>
-                           {job.title}
-                         </option>
-                       ))}
-                     </select>
-                     <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-500">
-                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                       </svg>
-                     </div>
-                   </div>
+                   <CustomSelect
+                     value={selectedJobId}
+                     onChange={setSelectedJobId}
+                     disabled={loadingJobs}
+                     options={jobOptions}
+                     bgColorClass="bg-slate-50"
+                     placeholder={loadingJobs ? 'Loading jobs...' : 'Select a job'}
+                   />
 
                   {selectedJob && (
                     <div className="rounded-[1.75rem] border border-slate-200 bg-slate-50 p-6">

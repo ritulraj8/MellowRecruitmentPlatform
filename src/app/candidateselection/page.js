@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import BackButton from '../../components/BackButton';
+import CustomSelect from '../../components/CustomSelect';
 
 const STAGE_ORDER = [
   'Initial Screening',
@@ -10,6 +11,13 @@ const STAGE_ORDER = [
   'Technical Assessment',
   'HR Interview',
   'Final Decision',
+];
+
+const STATUS_OPTIONS = [
+  { value: 'Pending', label: 'Pending' },
+  { value: 'In Progress', label: 'In Progress' },
+  { value: 'Completed', label: 'Completed' },
+  { value: 'On Hold', label: 'On Hold' },
 ];
 
 function CandidateSelectionComponent() {
@@ -392,15 +400,22 @@ function CandidateSelectionComponent() {
                                                 break;
                                             }
                                         }
+                                        const cardStyle = isLocked
+                                            ? 'bg-slate-100/30 border-slate-200/40 opacity-65'
+                                            : step.status === 'Completed' || step.status === 'Accepted'
+                                            ? 'bg-green-50/20 border-green-500/30 dark:bg-green-50/5 dark:border-green-500/20'
+                                            : step.status === 'Rejected'
+                                            ? 'bg-red-50/20 border-red-500/30 dark:bg-red-50/5 dark:border-red-500/20'
+                                            : step.status === 'In Progress'
+                                            ? 'bg-cyan-50/30 border-cyan-500/40 dark:bg-cyan-50/5 dark:border-cyan-500/30 shadow-lg shadow-cyan-500/5'
+                                            : step.status === 'On Hold'
+                                            ? 'bg-amber-50/20 border-amber-500/30 dark:bg-amber-50/5 dark:border-amber-500/20'
+                                            : 'bg-slate-50 border-slate-200';
 
                                         return (
                                             <div
                                                 key={step.id}
-                                                className={`rounded-[1.75rem] border border-slate-200 p-6 transition-all ${
-                                                    isLocked 
-                                                        ? 'bg-slate-100/50 dark:bg-slate-900/40 opacity-70' 
-                                                        : 'bg-slate-50 dark:bg-slate-900/80'
-                                                }`}
+                                                className={`rounded-[1.75rem] border p-6 transition-all ${cardStyle}`}
                                             >
                                                 <div className="flex flex-col gap-5">
                                                     <div className="flex items-start justify-between flex-wrap gap-2">
@@ -462,50 +477,26 @@ function CandidateSelectionComponent() {
                                                                 <label className="mb-2 block text-sm font-medium text-slate-700">
                                                                     Status
                                                                 </label>
-
-                                                                <div className="relative">
-                                                                    <select
-                                                                        value={step.status}
-                                                                        disabled={isLocked}
-                                                                        onChange={(e) =>
-                                                                            updateStep(
-                                                                                step.id,
-                                                                                'status',
-                                                                                e.target.value
-                                                                            )
-                                                                        }
-                                                                        className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-sm outline-none transition-all focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100/60 dark:focus:ring-cyan-950/40 disabled:opacity-50 disabled:bg-slate-100/50 dark:disabled:bg-slate-800/40"
-                                                                    >
-                                                                        <option value="Pending">
-                                                                            Pending
-                                                                        </option>
-
-                                                                        <option value="In Progress">
-                                                                            In Progress
-                                                                        </option>
-
-                                                                        <option value="Completed">
-                                                                            Completed
-                                                                        </option>
-
-                                                                        <option value="On Hold">
-                                                                            On Hold
-                                                                        </option>
-                                                                    </select>
-                                                                    <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-500">
-                                                                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                                                                        </svg>
-                                                                    </div>
-                                                                </div>
+                                                                <CustomSelect
+                                                                    value={step.status}
+                                                                    disabled={isLocked}
+                                                                    onChange={(val) =>
+                                                                        updateStep(
+                                                                            step.id,
+                                                                            'status',
+                                                                            val
+                                                                        )
+                                                                    }
+                                                                    options={STATUS_OPTIONS}
+                                                                    bgColorClass="bg-white"
+                                                                />
                                                             </div>
 
                                                             <div>
                                                                 <label className="mb-2 block text-sm font-medium text-slate-700">
                                                                     Notes
                                                                 </label>
-
-                                                                <textarea
+                                                                 <textarea
                                                                     rows={5}
                                                                     value={step.notes || ''}
                                                                     disabled={isLocked}
@@ -516,8 +507,8 @@ function CandidateSelectionComponent() {
                                                                             e.target.value
                                                                         )
                                                                     }
-                                                                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none disabled:opacity-50 disabled:bg-slate-100/50 dark:disabled:bg-slate-800/40"
-                                                                />
+                                                                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none disabled:opacity-50 disabled:bg-slate-100/50 dark:disabled:bg-slate-800/40"
+                                                                 />
                                                             </div>
                                                         </>
                                                     )}
