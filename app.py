@@ -1,4 +1,4 @@
-﻿import json
+import json
 import base64
 import os
 import tempfile
@@ -254,6 +254,10 @@ def match_candidate():
 @app.route("/convert-doc", methods=["POST"])
 def convert_doc_route():
     pythoncom.CoInitialize()
+    temp_in_path = None
+    temp_out_path = None
+    word = None
+    doc = None
     try:
         data = request.get_json(silent=True)
         if not data or "doc_bytes" not in data:
@@ -270,27 +274,23 @@ def convert_doc_route():
         
         # Open in Word and save as docx
         # FileFormat=16 is wdFormatXMLDocument (docx)
-        word = win32com.client.Dispatch("Word.Application")
+        word = win32com.client.DispatchEx("Word.Application")
         word.Visible = False
+        
+        doc = word.Documents.Open(temp_in_path)
+        doc.SaveAs2(temp_out_path, FileFormat=16)
+        
+        doc.Close(False)
+        del doc
         doc = None
-        try:
-            doc = word.Documents.Open(temp_in_path)
-            doc.SaveAs2(temp_out_path, FileFormat=16)
-        finally:
-            if doc:
-                doc.Close()
-            word.Quit()
+        
+        word.Quit()
+        del word
+        word = None
             
         # Read the docx file
         with open(temp_out_path, "rb") as temp_out:
             docx_bytes = temp_out.read()
-            
-        # Clean up temp files
-        try:
-            os.remove(temp_in_path)
-            os.remove(temp_out_path)
-        except Exception as cleanup_err:
-            print(f"Cleanup error: {cleanup_err}")
             
         return jsonify({
             "docx_bytes": base64.b64encode(docx_bytes).decode("utf-8")
@@ -300,7 +300,25 @@ def convert_doc_route():
         print("Error during doc to docx conversion:", str(e))
         return jsonify({"error": str(e)}), 500
     finally:
+        if doc:
+            try:
+                doc.Close(False)
+            except Exception:
+                pass
+            del doc
+        if word:
+            try:
+                word.Quit()
+            except Exception:
+                pass
+            del word
         pythoncom.CoUninitialize()
+        for path in [temp_in_path, temp_out_path]:
+            if path and os.path.exists(path):
+                try:
+                    os.remove(path)
+                except Exception as cleanup_err:
+                    print(f"Cleanup error: {cleanup_err}")
 
 
 # --------------------------------------------------

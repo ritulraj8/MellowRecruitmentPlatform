@@ -96,7 +96,11 @@ def extract_text_from_blob(blob_data):
     elif mime_type == "application/msword":
 
       import pythoncom
+      import os
       pythoncom.CoInitialize()
+      temp_path = None
+      word = None
+      doc = None
       try:
         with tempfile.NamedTemporaryFile(
             delete=False,
@@ -106,13 +110,19 @@ def extract_text_from_blob(blob_data):
             temp_file.write(blob_data)
             temp_path = temp_file.name
 
-        word = win32com.client.Dispatch("Word.Application")
+        word = win32com.client.DispatchEx("Word.Application")
+        word.Visible = False
         doc = word.Documents.Open(temp_path)
 
         text = doc.Content.Text
 
-        doc.Close()
+        doc.Close(False)
+        del doc
+        doc = None
+
         word.Quit()
+        del word
+        word = None
 
         return text
 
@@ -121,7 +131,24 @@ def extract_text_from_blob(blob_data):
             f"Unable to read DOC file: {str(e)}"
         )
       finally:
+        if doc:
+          try:
+            doc.Close(False)
+          except Exception:
+            pass
+          del doc
+        if word:
+          try:
+            word.Quit()
+          except Exception:
+            pass
+          del word
         pythoncom.CoUninitialize()
+        if temp_path and os.path.exists(temp_path):
+          try:
+            os.remove(temp_path)
+          except Exception as cleanup_err:
+            print(f"Cleanup error in matcher: {cleanup_err}")
 
         
     # ==================================================
