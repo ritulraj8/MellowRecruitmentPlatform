@@ -1,4 +1,4 @@
-import json
+﻿import json
 import base64
 import os
 import tempfile
@@ -229,6 +229,15 @@ def match_candidate():
                 job_embedding,
                 resume_embedding
             )
+            '''if candidate_id == 395:
+                print("Job Description:")
+                print(job_description[:500])
+
+                print("\nResume Text:")
+                print(resume_text[:1000])
+
+                print("\nSemantic Score:", scores["semantic_score"])
+                print("Keyword Score:", scores["keyword_score"])'''
         except Exception as e:
             return jsonify({
                 "error": f"Failed to calculate similarity scores: {str(e)}"
@@ -244,6 +253,8 @@ def match_candidate():
             "job_embedding": serialize_embedding(job_embedding),
             "resume_embedding": serialize_embedding(resume_embedding)
         }), 200
+
+       
     
     except Exception as e:
         return jsonify({

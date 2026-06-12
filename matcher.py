@@ -21,7 +21,7 @@ model = SentenceTransformer("all-MiniLM-L6-v2")
 # TEXT EXTRACTION
 # --------------------------------------------------
 
-def extract_text_from_blob(blob_data):
+def _extract_raw_text_from_blob(blob_data):
     """
     Extract text from PDF, DOC, DOCX, and TXT files.
     """
@@ -184,6 +184,51 @@ def extract_text_from_blob(blob_data):
             f"Unsupported file type: {mime_type}"
         )
 
+
+def clean_spaced_text(text):
+    if not text:
+        return text
+    
+    import re
+    # Split text into lines to process line by line
+    lines = text.splitlines()
+    cleaned_lines = []
+    
+    for line in lines:
+        if not line.strip():
+            cleaned_lines.append(line)
+            continue
+            
+        # Tokenize by single space to check if it's spaced out
+        tokens = line.split(' ')
+        non_empty = [t for t in tokens if t]
+        if not non_empty:
+            cleaned_lines.append(line)
+            continue
+            
+        single_char_tokens = [t for t in non_empty if len(t) == 1]
+        
+        # If more than 50% of the tokens are single characters, it's likely spaced-out text
+        if len(single_char_tokens) / len(non_empty) > 0.5:
+            placeholder = "___W_B___"
+            # Replace sequences of 2 or more whitespace characters with placeholder
+            spaced_line = re.sub(r'\s{2,}', placeholder, line)
+            # Remove all single spaces
+            spaced_line = spaced_line.replace(" ", "")
+            # Replace placeholder back with a single space
+            cleaned_line = spaced_line.replace(placeholder, " ")
+            cleaned_lines.append(cleaned_line)
+        else:
+            cleaned_lines.append(line)
+            
+    return "\n".join(cleaned_lines)
+
+
+def extract_text_from_blob(blob_data):
+    raw_text = _extract_raw_text_from_blob(blob_data)
+    return clean_spaced_text(raw_text)
+
+
 # --------------------------------------------------
 # EMBEDDING FUNCTIONS
 # --------------------------------------------------
@@ -296,6 +341,9 @@ def match_resume(
     resume_text = extract_text_from_blob(
         resume_blob
     )
+
+    print(len(resume_text))
+    print(resume_text[:1000])
 
     result = calculate_hybrid_similarity(
         job_desc,

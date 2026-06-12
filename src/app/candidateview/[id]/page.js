@@ -10,6 +10,19 @@ const pool = new Pool({
 
 function formatDate(dateString) {
   if (!dateString) return 'N/A';
+  if (typeof dateString === 'string') {
+    const parts = dateString.split('T')[0].split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+      return `${day} ${months[month]} ${year}`;
+    }
+  }
   const date = new Date(dateString);
   return date.toLocaleDateString('en-IN', {
     year: 'numeric',
@@ -46,7 +59,7 @@ export default async function CandidateView({ params, searchParams }) {
   }
 
   const result = await pool.query(
-    'SELECT id, first_name, last_name, email, phone, date_of_birth FROM "CANDIDATES" WHERE id = $1 LIMIT 1',
+    'SELECT id, first_name, last_name, email, phone, TO_CHAR(date_of_birth, \'YYYY-MM-DD\') AS date_of_birth FROM "CANDIDATES" WHERE id = $1 LIMIT 1',
     [candidateId]
   );
 

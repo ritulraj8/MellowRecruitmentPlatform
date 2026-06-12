@@ -183,6 +183,7 @@ function JobMatchingComponent() {
               }
             );
 
+
             const embeddingData =
               await embeddingResponse.json();
 

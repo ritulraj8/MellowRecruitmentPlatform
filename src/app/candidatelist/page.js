@@ -16,6 +16,11 @@ export default function CandidateList() {
   const [error, setError] = useState('');
   const [sortBy, setSortBy] = useState('id');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [candidateToDelete, setCandidateToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -41,8 +46,14 @@ export default function CandidateList() {
         }
 
         const data = await response.json();
-        setCandidates(data.candidates || []);
+        const candidatesData = data.candidates || [];
+        setCandidates(candidatesData);
         setTotal(data.total || 0);
+        
+        if (candidatesData.length === 0 && page > 1) {
+          setPage(prev => Math.max(1, prev - 1));
+        }
+        
         setLoading(false);
       } catch (err) {
         if (err.name !== 'AbortError') {
@@ -56,7 +67,7 @@ export default function CandidateList() {
     loadCandidates();
 
     return () => controller.abort();
-  }, [page, searchValue, sortBy, sortOrder]);
+  }, [page, searchValue, sortBy, sortOrder, refreshTrigger]);
 
   const totalPages = Math.max(1, Math.ceil(total / RESULTS_PER_PAGE));
   const startIndex = total === 0 ? 0 : (page - 1) * RESULTS_PER_PAGE + 1;
@@ -82,6 +93,39 @@ export default function CandidateList() {
       setSortOrder('asc');
     }
     setPage(1);
+  }
+
+  function openDeleteModal(candidate) {
+    setCandidateToDelete(candidate);
+    setDeleteModalOpen(true);
+  }
+
+  async function confirmDelete() {
+    if (!candidateToDelete) return;
+    setDeleting(true);
+    setError('');
+
+    try {
+      const response = await fetch(`/api/candidate/${candidateToDelete.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to delete candidate.');
+      }
+
+      setRefreshTrigger((prev) => prev + 1);
+      setDeleteModalOpen(false);
+      setCandidateToDelete(null);
+    } catch (err) {
+      console.error('Delete candidate error:', err);
+      setError(err.message || 'Error deleting candidate. Please try again.');
+      setDeleteModalOpen(false);
+      setCandidateToDelete(null);
+    } finally {
+      setDeleting(false);
+    }
   }
 
   const renderSortIcon = (field) => {
@@ -240,7 +284,7 @@ export default function CandidateList() {
                         <td className="px-4 py-4 text-slate-950">{candidate.email}</td>
                         <td className="px-4 py-4 text-slate-950">{candidate.phone}</td>
                         <td className="px-4 py-4 text-slate-950">
-                          <div className="flex flex-wrap gap-3">
+                          <div className="flex flex-wrap gap-3 items-center">
                             <Link
                               href={`/candidateview/${candidate.id}`}
                               className="text-sm font-semibold text-cyan-700 hover:text-cyan-900"
@@ -254,6 +298,13 @@ export default function CandidateList() {
                             >
                               Edit
                             </Link>
+                            <span className="text-slate-400">|</span>
+                            <button
+                              onClick={() => openDeleteModal(candidate)}
+                              className="text-sm font-semibold text-red-600 hover:text-red-800 focus:outline-none cursor-pointer"
+                            >
+                              Delete
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -305,6 +356,45 @@ export default function CandidateList() {
           </div>
         </div>
       </section>
+
+      {deleteModalOpen && candidateToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl transition-all scale-100 animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-xl font-semibold text-slate-950">Confirm Deletion</h3>
+            <p className="mt-3 text-sm text-slate-600 leading-relaxed">
+              Are you sure you want to delete candidate <strong className="font-semibold text-slate-900">{candidateToDelete.first_name} {candidateToDelete.last_name}</strong>? This action cannot be undone and will delete all related records.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteModalOpen(false);
+                  setCandidateToDelete(null);
+                }}
+                disabled={deleting}
+                className="rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                disabled={deleting}
+                className="inline-flex items-center justify-center rounded-full bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-red-600/20 transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+              >
+                {deleting ? (
+                  <span className="flex items-center gap-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                    Deleting...
+                  </span>
+                ) : (
+                  'Delete'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
